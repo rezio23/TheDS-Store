@@ -1,0 +1,58 @@
+/legacy/
+
+# Environment files
+.env
+.env.backup
+.env.production
+.env.local
+.env.*.local
+
+# Dependencies
+/vendor
+/node_modules
+
+# Laravel build / cache
+/public/build
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+/storage/*.key
+/storage/pail
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/storage/app/private/*
+/bootstrap/cache/*
+
+# IDE / Editor
+/.idea
+/.vscode
+/.zed
+/.nova
+/.cursor/
+/.phpunit.cache
+.phpactor.json
+
+# Testing
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+/auth.json
+_ide_helper.php
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Composer
+composer.phar
+
+# Misc
+/.codex
