@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'About')
+@section('title', 'About | The DS')
 @section('body_class', 'about-page')
 
 @section('content')

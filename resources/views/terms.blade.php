@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Terms & Conditions')
+@section('title', 'Terms & Conditions | The DS')
 @section('body_class', 'terms-page')
 
 @section('content')

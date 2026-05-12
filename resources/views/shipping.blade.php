@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Shipping')
+@section('title', 'Shipping | The DS')
 @section('body_class', 'shipping-page')
 
 @section('content')

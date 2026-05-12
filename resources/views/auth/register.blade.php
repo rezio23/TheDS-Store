@@ -1,4 +1,6 @@
 <x-guest-layout>
+    <x-slot name="title">Sign Up | The DS</x-slot>
+
     <h1>Sign Up</h1>
     <hr class="edit-form-divider">
 

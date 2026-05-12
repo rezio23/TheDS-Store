@@ -5,7 +5,8 @@
 @section('body_class', 'home-page')
 
 @section('content')
-    <section class="hero-section" aria-labelledby="hero-heading">
+    <main>
+        <section class="hero-section" aria-labelledby="hero-heading">
         <div class="hero-copy">
             <p class="pixel-note">/New Arrival<br>Collection 2026</p>
             <h1 id="hero-heading">Stylish your <span>- Fashion</span></h1>
@@ -252,4 +253,5 @@
             @endforeach
         </div>
     </section>
+    </main>
 @endsection

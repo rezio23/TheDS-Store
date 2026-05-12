@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $product->name)
+@section('title', $product->name . ' | The DS')
 @section('body_class', 'product-detail-page')
 
 @section('content')
@@ -60,28 +60,20 @@
         <section class="product-detail-layout" aria-labelledby="product-title">
             <div class="product-detail-media">
                 <div class="product-gallery" data-product-gallery>
-                    @if (!empty($gallery))
-                        <div class="product-thumbs" role="list" aria-label="Product images">
-                            @foreach ($gallery as $index => $image)
-                                <button class="product-thumb {{ $index === 0 ? 'is-active' : '' }}" type="button" role="listitem" data-product-gallery-thumb data-gallery-image="{{ asset('storage/' . $image) }}" data-gallery-alt="{{ $product->name }} product image" aria-label="Show image {{ $index + 1 }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
-                                    <img src="{{ asset('storage/' . $image) }}" alt="">
-                                </button>
-                            @endforeach
-                        </div>
-                    @endif
+                    <div class="product-thumbs" role="list" aria-label="Product images">
+                        @foreach ($gallery as $index => $image)
+                            <button class="product-thumb {{ $index === 0 ? 'is-active' : '' }}" type="button" role="listitem" data-product-gallery-thumb data-gallery-image="{{ asset('storage/' . $image) }}" data-gallery-alt="{{ $product->name }} product image" aria-label="Show image {{ $index + 1 }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
+                                <img src="{{ asset('storage/' . $image) }}" alt="">
+                            </button>
+                        @endforeach
+                    </div>
 
                     <figure class="product-hero-media">
                         <img data-product-gallery-main src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
-                        @if (!empty($product->badge) || !empty($product->rating))
-                            <figcaption class="product-badges" aria-label="Product badges">
-                                @if (!empty($product->badge))
-                                    <span>{{ $product->badge }}</span>
-                                @endif
-                                @if (!empty($product->rating))
-                                    <span>{{ $product->rating }} star</span>
-                                @endif
-                            </figcaption>
-                        @endif
+                        <figcaption class="product-badges" aria-label="Product badges">
+                            <span>{{ $product->badge }}</span>
+                            <span>{{ $product->rating }} star</span>
+                        </figcaption>
                     </figure>
                 </div>
 
@@ -122,22 +114,20 @@
                     </div>
                 </section>
 
-                @if ($relatedProducts->count() > 0)
-                    <section class="product-option-group product-similar-group" aria-labelledby="similar-product-title">
-                        <h2 id="similar-product-title">Similar Product</h2>
-                        <div class="product-similar-list">
-                            @foreach ($relatedProducts as $related)
-                                @php
-                                    $relatedGallery = array_filter(explode('|', $related->gallery ?? ''));
-                                    $relatedImage = $relatedGallery[0] ?? $related->image;
-                                @endphp
-                                <a href="{{ route('product.show', ['slug' => $related->slug]) }}" class="product-similar-item">
-                                    <img src="{{ asset('storage/' . $relatedImage) }}" alt="{{ $related->name }}">
-                                </a>
-                            @endforeach
-                        </div>
-                    </section>
-                @endif
+                <section class="product-option-group product-similar-group" aria-labelledby="similar-product-title">
+                    <h2 id="similar-product-title">Similar Product</h2>
+                    <div class="product-similar-list">
+                        @foreach ($relatedProducts as $related)
+                            @php
+                                $relatedGallery = array_filter(explode('|', $related->gallery ?? ''));
+                                $relatedImage = $relatedGallery[0] ?? $related->image;
+                            @endphp
+                            <a href="{{ route('product.show', ['slug' => $related->slug]) }}" aria-label="View {{ $related->name }}" title="{{ $related->name }}">
+                                <img src="{{ asset('storage/' . $relatedImage) }}" alt="{{ $related->name }}">
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
             </article>
         </section>
     </main>

@@ -1,10 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Profile')
-@section('body_class', 'edit-profile-page')
+@section('title', 'Edit Profile | The DS')
 
 @section('content')
-    <main class="edit-profile-main">
+    <main class="edit-profile-page">
         <div class="edit-profile-card">
             <h1>Edit Personal Detail</h1>
             <hr class="edit-form-divider">

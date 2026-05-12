@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Help Center')
+@section('title', 'Help Center | The DS')
 @section('body_class', 'help-page')
 
 @section('content')

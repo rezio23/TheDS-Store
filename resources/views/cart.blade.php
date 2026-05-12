@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Cart')
+@section('title', 'Cart | The DS')
 @section('body_class', 'cart-page')
 
 @section('content')
