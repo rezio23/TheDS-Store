@@ -20,32 +20,34 @@ class CheckoutController extends Controller
             return $item['price'] * $item['quantity'];
         }, $cart));
 
-        $shippingOptions = [
-            ['value' => 'standard', 'label' => 'Standard Shipping', 'price' => 5.00, 'time' => '5-7 business days'],
-            ['value' => 'express', 'label' => 'Express Shipping', 'price' => 15.00, 'time' => '2-3 business days'],
-            ['value' => 'next_day', 'label' => 'Next Day Delivery', 'price' => 25.00, 'time' => '1 business day'],
-        ];
+        $shippingPrice = 2.99;
+        $taxes = round($subtotal * 0.018, 2);
+        $total = $subtotal + $shippingPrice + $taxes;
 
         $user = Auth::user();
 
-        return view('shipping', compact('cart', 'subtotal', 'shippingOptions', 'user'));
+        return view('shipping', compact('cart', 'subtotal', 'shippingPrice', 'taxes', 'total', 'user'));
     }
 
     public function storeShipping(Request $request)
     {
         $request->validate([
-            'shipping_name' => 'required|string|max:255',
-            'shipping_phone' => 'required|string|max:50',
-            'shipping_address' => 'required|string',
-            'shipping_postal' => 'required|string|max:20',
-            'shipping_email' => 'required|email|max:255',
-            'shipping_mode' => 'required|string',
+            'full_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:50',
+            'address_1' => 'required|string|max:255',
+            'address_2' => 'nullable|string|max:255',
+            'postal_code' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
+            'description' => 'nullable|string|max:500',
+            'shipping_mode' => 'required|string|in:standard,fast',
         ]);
 
         session(['shipping' => $request->only([
-            'shipping_name', 'shipping_phone', 'shipping_address',
-            'shipping_postal', 'shipping_email', 'shipping_mode',
-        ])]);
+            'full_name', 'phone', 'address_1', 'address_2', 'postal_code',
+            'email', 'description', 'shipping_mode',
+        ]) + [
+            'shipping_cost' => $request->shipping_mode === 'fast' ? 5.99 : 2.99,
+        ]]);
 
         return redirect()->route('payment');
     }
@@ -64,14 +66,14 @@ class CheckoutController extends Controller
         }, $cart));
 
         $shippingPrice = match ($shipping['shipping_mode'] ?? 'standard') {
-            'express' => 15.00,
-            'next_day' => 25.00,
-            default => 5.00,
+            'fast' => 5.99,
+            default => 2.99,
         };
 
-        $total = $subtotal + $shippingPrice;
+        $taxes = round($subtotal * 0.018, 2);
+        $total = $subtotal + $shippingPrice + $taxes;
 
-        return view('payment', compact('cart', 'shipping', 'subtotal', 'shippingPrice', 'total'));
+        return view('payment', compact('cart', 'shipping', 'subtotal', 'shippingPrice', 'taxes', 'total'));
     }
 
     public function processPayment(Request $request)
@@ -88,22 +90,27 @@ class CheckoutController extends Controller
         }, $cart));
 
         $shippingPrice = match ($shipping['shipping_mode'] ?? 'standard') {
-            'express' => 15.00,
-            'next_day' => 25.00,
-            default => 5.00,
+            'fast' => 5.99,
+            default => 2.99,
         };
 
-        $total = $subtotal + $shippingPrice;
+        $taxes = round($subtotal * 0.018, 2);
+        $total = $subtotal + $shippingPrice + $taxes;
+
+        $address = ($shipping['address_1'] ?? '');
+        if (!empty($shipping['address_2'])) {
+            $address .= ', ' . $shipping['address_2'];
+        }
 
         $order = Order::create([
             'user_id' => Auth::id(),
             'total' => $total,
             'status' => 'pending',
-            'shipping_name' => $shipping['shipping_name'],
-            'shipping_phone' => $shipping['shipping_phone'],
-            'shipping_address' => $shipping['shipping_address'],
-            'shipping_postal' => $shipping['shipping_postal'],
-            'shipping_email' => $shipping['shipping_email'],
+            'shipping_name' => $shipping['full_name'],
+            'shipping_phone' => $shipping['phone'],
+            'shipping_address' => $address,
+            'shipping_postal' => $shipping['postal_code'],
+            'shipping_email' => $shipping['email'],
             'shipping_mode' => $shipping['shipping_mode'],
         ]);
 
@@ -115,11 +122,12 @@ class CheckoutController extends Controller
                 'product_price' => $item['price'],
                 'quantity' => $item['quantity'],
                 'size' => $item['size'],
+                'product_image' => $item['image'] ?? null,
             ]);
         }
 
         session()->forget(['cart', 'shipping']);
 
-        return redirect()->route('profile')->with('success', 'Order placed successfully!');
+        return redirect()->route('profile', ['ordered' => 1]);
     }
 }

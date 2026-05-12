@@ -63,15 +63,15 @@
                     @if (!empty($gallery))
                         <div class="product-thumbs" role="list" aria-label="Product images">
                             @foreach ($gallery as $index => $image)
-                                <button class="product-thumb {{ $index === 0 ? 'is-active' : '' }}" type="button" role="listitem" data-product-gallery-thumb data-gallery-image="{{ asset($image) }}" data-gallery-alt="{{ $product->name }} product image" aria-label="Show image {{ $index + 1 }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
-                                    <img src="{{ asset($image) }}" alt="">
+                                <button class="product-thumb {{ $index === 0 ? 'is-active' : '' }}" type="button" role="listitem" data-product-gallery-thumb data-gallery-image="{{ asset('storage/' . $image) }}" data-gallery-alt="{{ $product->name }} product image" aria-label="Show image {{ $index + 1 }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
+                                    <img src="{{ asset('storage/' . $image) }}" alt="">
                                 </button>
                             @endforeach
                         </div>
                     @endif
 
                     <figure class="product-hero-media">
-                        <img data-product-gallery-main src="{{ asset($product->image) }}" alt="{{ $product->name }}">
+                        <img data-product-gallery-main src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
                         @if (!empty($product->badge) || !empty($product->rating))
                             <figcaption class="product-badges" aria-label="Product badges">
                                 @if (!empty($product->badge))
@@ -132,7 +132,7 @@
                                     $relatedImage = $relatedGallery[0] ?? $related->image;
                                 @endphp
                                 <a href="{{ route('product.show', ['slug' => $related->slug]) }}" class="product-similar-item">
-                                    <img src="{{ asset($relatedImage) }}" alt="{{ $related->name }}">
+                                    <img src="{{ asset('storage/' . $relatedImage) }}" alt="{{ $related->name }}">
                                 </a>
                             @endforeach
                         </div>

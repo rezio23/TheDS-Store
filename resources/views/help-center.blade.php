@@ -1,60 +1,271 @@
 @extends('layouts.app')
 
 @section('title', 'Help Center')
-@section('body_class', 'help-center-page')
+@section('body_class', 'help-page')
 
 @section('content')
     <main class="help-main">
-        <section class="help-section" aria-labelledby="help-heading">
-            <div class="help-hero">
-                <h1 id="help-heading">Help Center</h1>
-                <p>How can we help you today?</p>
+        <section class="help-hero" aria-labelledby="help-hero-heading">
+            <div class="help-hero-copy">
+                <p class="pixel-note"><span>Home / Help /</span> Support</p>
+                <h1 id="help-hero-heading">Help <span>Center</span></h1>
+                <p class="help-hero-lead">Find answers to common questions below, or chat with our AI assistant for instant support.</p>
+                <a href="#faq" class="help-hero-cta">
+                    Browse FAQs
+                    <i data-lucide="arrow-down" aria-hidden="true"></i>
+                </a>
+            </div>
+            <figure class="help-hero-model">
+                <img src="https://parkaccess.com.ph/cdn/shop/files/AURORA_FD2596-602_PHSLH000-2000.png?v=1770200188" alt="Customer support illustration">
+            </figure>
+        </section>
+
+        <section class="brand-ticker help-brand-ticker" aria-label="Featured brands">
+            <div class="brand-track">
+                @for ($i = 0; $i < 4; $i++)
+                    @foreach ($helpTickerBrands as $brand)
+                        <span>{{ $brand }}</span>
+                    @endforeach
+                @endfor
+            </div>
+        </section>
+
+        <section class="help-contact" aria-label="Contact options">
+            <div class="help-contact-grid">
+                <article class="help-contact-card">
+                    <span class="help-contact-icon"><i data-lucide="bot"></i></span>
+                    <h3>AI Chat</h3>
+                    <p>Get instant answers 24/7 from our AI assistant.</p>
+                    <a href="#chat">Start Chatting <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+                </article>
+                <article class="help-contact-card">
+                    <span class="help-contact-icon"><i data-lucide="mail"></i></span>
+                    <h3>Email Us</h3>
+                    <p>thedaservice@store.com</p>
+                    <a href="mailto:thedaservice@store.com">Send Email <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+                </article>
+                <article class="help-contact-card">
+                    <span class="help-contact-icon"><i data-lucide="phone"></i></span>
+                    <h3>Call Us</h3>
+                    <p>+855 112 233</p>
+                    <a href="tel:+855112233">Call Now <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+                </article>
+            </div>
+        </section>
+
+        <section class="help-faq" id="faq" aria-labelledby="faq-heading">
+            <div class="help-faq__intro">
+                <h2 id="faq-heading">Frequently Asked Questions</h2>
+                <p class="pixel-note">Quick answers to the most common topics.</p>
             </div>
 
-            <div class="help-content">
-                <article class="help-block">
-                    <h2>Frequently Asked Questions</h2>
-                    <dl class="help-faq">
-                        <dt>How do I track my order?</dt>
-                        <dd>You can track your order by logging into your account and viewing your order history.</dd>
+            <div class="help-faq-search">
+                <span class="help-faq-search__icon"><i data-lucide="search"></i></span>
+                <input type="search" id="faq-search" placeholder="Search questions..." aria-label="Search FAQs">
+            </div>
 
-                        <dt>What is your return policy?</dt>
-                        <dd>We accept returns within 14 days of delivery. Items must be in original condition with tags attached.</dd>
+            <div class="help-faq-list">
+                @foreach ($helpFaqs as $index => $faq)
+                    <article class="help-faq-item">
+                        <button
+                            class="help-faq-toggle"
+                            type="button"
+                            data-product-toggle
+                            aria-expanded="{{ $index === 0 ? 'true' : 'false' }}"
+                            aria-controls="faq-panel-{{ $index }}"
+                        >
+                            <span class="help-faq-toggle__num">{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</span>
+                            <span class="help-faq-toggle__text">{{ $faq['question'] }}</span>
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <div
+                            class="help-faq-content"
+                            id="faq-panel-{{ $index }}"
+                            data-product-content
+                            {!! $index !== 0 ? 'hidden' : '' !!}
+                        >
+                            <p>{{ $faq['answer'] }}</p>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+            <p class="help-faq-empty" data-faq-empty hidden>No questions match your search.</p>
+        </section>
 
-                        <dt>How long does shipping take?</dt>
-                        <dd>Standard shipping takes 5-7 business days. Express shipping is available for faster delivery.</dd>
-
-                        <dt>Are all products authentic?</dt>
-                        <dd>Yes, we guarantee the authenticity of every product we sell.</dd>
-                    </dl>
-                </article>
-
-                <article class="help-block">
-                    <h2>Contact Us</h2>
-                    <p>Can't find what you're looking for? Send us a message and we'll get back to you within 24 hours.</p>
-
-                    @if (session('success'))
-                        <div class="auth-success" style="color: #2a9d8f; margin-bottom: 1rem; font-size: 0.9rem;">{{ session('success') }}</div>
-                    @endif
-
-                    <form class="help-form" method="POST" action="{{ route('help-center') }}">
+        <section class="help-chat" id="chat" aria-labelledby="chat-heading">
+            <div class="help-chat__card">
+                <div class="help-chat__sidebar">
+                    <div class="help-chat__brand">
+                        <span class="help-chat__brand-icon"><i data-lucide="bot"></i></span>
+                        <div>
+                            <h2 id="chat-heading">AI Support</h2>
+                            <p>Powered by DS</p>
+                        </div>
+                    </div>
+                    <div class="help-chat__info">
+                        <p>Our AI assistant can help with orders, shipping, returns, sizing, and product questions.</p>
+                        <ul>
+                            <li><i data-lucide="check-circle-2"></i> Instant replies</li>
+                            <li><i data-lucide="check-circle-2"></i> 24/7 available</li>
+                            <li><i data-lucide="check-circle-2"></i> Secure &amp; private</li>
+                        </ul>
+                    </div>
+                    <div class="help-chat__status">
+                        <span class="help-chat__dot"></span> Online now
+                    </div>
+                </div>
+                <div class="help-chat__body">
+                    <div class="help-chat__window" data-help-chat-window>
+                        <div class="help-chat__messages" data-help-chat-messages>
+                            <div class="help-chat__message help-chat__message--assistant">
+                                <span class="help-chat__avatar"><i data-lucide="bot"></i></span>
+                                <div class="help-chat__bubble">
+                                    <p>Hi there! I am The DS AI assistant. How can I help you today?</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <form class="help-chat__input" data-help-chat-form>
                         @csrf
-                        <div class="edit-form-group">
-                            <label class="edit-form-label" for="subject">Subject</label>
-                            <input class="edit-form-input" id="subject" name="subject" type="text" required>
-                        </div>
-
-                        <div class="edit-form-group">
-                            <label class="edit-form-label" for="message">Message</label>
-                            <textarea class="edit-form-input" id="message" name="message" rows="5" required></textarea>
-                        </div>
-
-                        <div class="edit-form-actions">
-                            <button type="submit" class="edit-form-button edit-form-button--submit edit-form-button--full">Send Message</button>
-                        </div>
+                        <input
+                            type="text"
+                            data-help-chat-input
+                            placeholder="Type your question..."
+                            aria-label="Chat message"
+                            autocomplete="off"
+                            maxlength="500"
+                        >
+                        <button type="submit" aria-label="Send message">
+                            <i data-lucide="send"></i>
+                        </button>
                     </form>
-                </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="help-cta" aria-labelledby="help-cta-heading">
+            <div class="help-cta-card">
+                <h2 id="help-cta-heading">Still need help?</h2>
+                <p>Our human support team is ready to assist you with anything the AI could not resolve.</p>
+                <div class="help-cta-actions">
+                    <a href="mailto:thedaservice@store.com" class="help-cta-btn help-cta-btn--primary">
+                        <i data-lucide="mail"></i> Email Support
+                    </a>
+                    <a href="tel:+855112233" class="help-cta-btn">
+                        <i data-lucide="phone"></i> Call Us
+                    </a>
+                </div>
             </div>
         </section>
     </main>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    var $form = $('[data-help-chat-form]');
+    var $input = $('[data-help-chat-input]');
+    var $messages = $('[data-help-chat-messages]');
+    var $window = $('[data-help-chat-window]');
+    var csrfToken = $form.find('input[name="_token"]').val();
+
+    var scrollToBottom = function () {
+        if ($window.length) {
+            $window[0].scrollTop = $window[0].scrollHeight;
+        }
+    };
+
+    var escapeHtml = function (text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    };
+
+    var appendMessage = function (role, text) {
+        var isUser = role === 'user';
+        var icon = isUser ? 'user-round' : 'bot';
+        var html = '<div class="help-chat__message help-chat__message--' + role + '">' +
+            '<span class="help-chat__avatar"><i data-lucide="' + icon + '"></i></span>' +
+            '<div class="help-chat__bubble"><p>' + escapeHtml(text) + '</p></div></div>';
+        $messages.append(html);
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+        scrollToBottom();
+    };
+
+    var setLoading = function (isLoading) {
+        $form.toggleClass('is-loading', isLoading);
+        $input.prop('disabled', isLoading);
+        if (isLoading) {
+            var typingHtml = '<div class="help-chat__message help-chat__message--assistant" data-typing-indicator>' +
+                '<span class="help-chat__avatar"><i data-lucide="bot"></i></span>' +
+                '<div class="help-chat__bubble">' +
+                '<span class="help-chat__typing"><span></span><span></span><span></span></span>' +
+                '</div></div>';
+            $messages.append(typingHtml);
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+            scrollToBottom();
+        } else {
+            $('[data-typing-indicator]').remove();
+        }
+    };
+
+    $form.on('submit', function (event) {
+        event.preventDefault();
+        var message = $input.val().trim();
+        if (!message) return;
+
+        appendMessage('user', message);
+        $input.val('');
+        setLoading(true);
+
+        $.ajax({
+            url: '{{ url('/chat-api') }}',
+            type: 'POST',
+            data: { message: message, _token: csrfToken },
+            dataType: 'json',
+        }).done(function (response) {
+            setLoading(false);
+            if (response.reply) {
+                appendMessage('assistant', response.reply);
+            } else if (response.error) {
+                appendMessage('assistant', 'Sorry: ' + response.error);
+            }
+        }).fail(function (xhr) {
+            setLoading(false);
+            var errorText = 'Something went wrong. Please try again later.';
+            try {
+                var resp = JSON.parse(xhr.responseText);
+                if (resp.error) errorText = resp.error;
+            } catch (e) {}
+            appendMessage('assistant', 'Sorry: ' + errorText);
+        });
+    });
+
+    scrollToBottom();
+
+    // FAQ search
+    var $faqSearch = $('#faq-search');
+    var $faqItems = $('.help-faq-item');
+    var $faqEmpty = $('[data-faq-empty]');
+
+    $faqSearch.on('input', function () {
+        var query = $(this).val().trim().toLowerCase();
+        var visibleCount = 0;
+        $faqItems.each(function () {
+            var $item = $(this);
+            var text = $item.text().toLowerCase();
+            var matches = query === '' || text.includes(query);
+            $item.toggleClass('is-hidden', !matches);
+            if (matches) visibleCount++;
+        });
+        $faqEmpty.prop('hidden', visibleCount > 0);
+    });
+})();
+</script>
+@endpush

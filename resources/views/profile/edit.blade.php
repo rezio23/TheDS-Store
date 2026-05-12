@@ -5,8 +5,8 @@
 
 @section('content')
     <main class="edit-profile-main">
-        <section class="edit-profile-section" aria-labelledby="edit-profile-heading">
-            <h1 id="edit-profile-heading">Edit Profile</h1>
+        <div class="edit-profile-card">
+            <h1>Edit Personal Detail</h1>
             <hr class="edit-form-divider">
 
             <form class="edit-form" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
@@ -22,23 +22,18 @@
                 @endif
 
                 <div class="edit-form-group">
-                    <label class="edit-form-label" for="full_name">Full Name</label>
-                    <input class="edit-form-input" id="full_name" name="full_name" type="text" value="{{ old('full_name', $user->full_name) }}" required>
+                    <label class="edit-form-label" for="edit-full-name">Full name</label>
+                    <input class="edit-form-input" id="edit-full-name" name="full_name" type="text" value="{{ old('full_name', $user->full_name) }}" placeholder="e.g. John Smith">
                 </div>
 
                 <div class="edit-form-group">
-                    <label class="edit-form-label" for="email">Email</label>
-                    <input class="edit-form-input" id="email" name="email" type="email" value="{{ old('email', $user->email) }}" required>
+                    <label class="edit-form-label" for="edit-username">Username</label>
+                    <input class="edit-form-input" id="edit-username" name="username" type="text" value="@ {{ strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}" placeholder="e.g. johnsmith123" readonly>
                 </div>
 
                 <div class="edit-form-group">
-                    <label class="edit-form-label" for="phone">Phone</label>
-                    <input class="edit-form-input" id="phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}">
-                </div>
-
-                <div class="edit-form-group">
-                    <label class="edit-form-label" for="gender">Gender</label>
-                    <select class="edit-form-input" id="gender" name="gender">
+                    <label class="edit-form-label" for="edit-gender">Gender</label>
+                    <select class="edit-form-input edit-form-select" id="edit-gender" name="gender">
                         <option value="Hidden" {{ old('gender', $user->gender) === 'Hidden' ? 'selected' : '' }}>Hidden</option>
                         <option value="Male" {{ old('gender', $user->gender) === 'Male' ? 'selected' : '' }}>Male</option>
                         <option value="Female" {{ old('gender', $user->gender) === 'Female' ? 'selected' : '' }}>Female</option>
@@ -47,15 +42,40 @@
                 </div>
 
                 <div class="edit-form-group">
-                    <label class="edit-form-label" for="address">Address</label>
-                    <textarea class="edit-form-input" id="address" name="address" rows="3">{{ old('address', $user->address) }}</textarea>
+                    <label class="edit-form-label" for="edit-profile-pic">Profile Picture</label>
+                    <div class="edit-form-file-wrap">
+                        <span class="edit-form-file-text" id="edit-file-text">Browser File</span>
+                        <input id="edit-profile-pic" name="avatar" type="file" accept="image/*" aria-label="Profile picture">
+                    </div>
+                </div>
+
+                <div class="edit-form-group">
+                    <label class="edit-form-label" for="edit-address">Address</label>
+                    <input class="edit-form-input" id="edit-address" name="address" type="text" value="{{ old('address', $user->address) }}" placeholder="e.g. Toul Kork, Cambodia">
+                </div>
+
+                <div class="edit-form-group">
+                    <label class="edit-form-label" for="edit-phone">Phone</label>
+                    <input class="edit-form-input" id="edit-phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}" placeholder="e.g. 85511 223 344">
                 </div>
 
                 <div class="edit-form-actions">
-                    <button type="submit" class="edit-form-button edit-form-button--submit edit-form-button--full">Save Changes</button>
-                    <a href="{{ route('profile') }}" class="edit-form-button edit-form-button--cancel">Cancel</a>
+                    <a href="{{ route('profile') }}" class="edit-form-button edit-form-button--cancel" role="button">Cancel</a>
+                    <button type="submit" class="edit-form-button edit-form-button--submit">Submit</button>
                 </div>
             </form>
-        </section>
+        </div>
     </main>
 @endsection
+
+@push('scripts')
+<script>
+    const fileInput = document.getElementById('edit-profile-pic');
+    const fileText = document.getElementById('edit-file-text');
+    if (fileInput && fileText) {
+        fileInput.addEventListener('change', () => {
+            fileText.textContent = fileInput.files[0]?.name || 'Browser File';
+        });
+    }
+</script>
+@endpush

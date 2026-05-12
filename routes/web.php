@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
@@ -45,5 +46,6 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/terms', [PageController::class, 'terms'])->name('terms');
 Route::get('/help-center', [PageController::class, 'helpCenter'])->name('help-center');
 Route::post('/help-center', [PageController::class, 'storeHelpRequest']);
+Route::post('/chat-api', ChatController::class);
 
 require __DIR__.'/auth.php';
