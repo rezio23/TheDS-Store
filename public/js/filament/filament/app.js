@@ -689,8 +689,8 @@
                 i?.__instance?.effects?.redirect
                     ? !1
                     : window.jsMd5(
-                          JSON.stringify(i.data).replace(/\\/g, ""),
-                      ) !== i.savedDataHash,
+                        JSON.stringify(i.data).replace(/\\/g, ""),
+                    ) !== i.savedDataHash,
             w = () => confirm(t);
         (document.addEventListener("livewire:navigate", (c) => {
             if (typeof n() < "u") {

@@ -45,6 +45,7 @@
                         <div class="cart-quantity-cell">
                             <form action="{{ route('cart.update') }}" method="post" class="cart-qty-control">
                                 @csrf
+                                <input type="hidden" name="action" value="update">
                                 <input type="hidden" name="key" value="{{ $key }}">
                                 <button type="submit" class="cart-qty-btn" name="quantity" value="{{ max(0, $item['quantity'] - 1) }}" aria-label="Decrease quantity">
                                     <i data-lucide="minus" aria-hidden="true"></i>

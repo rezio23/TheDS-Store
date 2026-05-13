@@ -167,6 +167,7 @@
                                 <strong>${{ number_format($product->price, 2) }}</strong>
                                 <form action="{{ route('cart.add') }}" method="post" style="display:inline;">
                                     @csrf
+                                    <input type="hidden" name="action" value="add">
                                     <input type="hidden" name="slug" value="{{ $product->slug }}">
                                     <button class="cart-button" type="submit" data-add-to-cart>
                                         <span>Add to Cart</span>

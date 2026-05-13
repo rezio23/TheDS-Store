@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Output\QROutputInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -73,7 +76,16 @@ class CheckoutController extends Controller
         $taxes = round($subtotal * 0.018, 2);
         $total = $subtotal + $shippingPrice + $taxes;
 
-        return view('payment', compact('cart', 'shipping', 'subtotal', 'shippingPrice', 'taxes', 'total'));
+        $qrOptions = new QROptions([
+            'outputType' => QROutputInterface::GDIMAGE_PNG,
+            'outputBase64' => true,
+            'scale' => 6,
+        ]);
+
+        $qrText = 'the DS Payment - $' . number_format($total, 2) . ' USD';
+        $qrUrl = (new QRCode($qrOptions))->render($qrText);
+
+        return view('payment', compact('cart', 'shipping', 'subtotal', 'shippingPrice', 'taxes', 'total', 'qrUrl'));
     }
 
     public function processPayment(Request $request)

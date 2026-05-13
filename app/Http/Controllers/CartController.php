@@ -54,6 +54,15 @@ class CartController extends Controller
 
         session(['cart' => $cart]);
 
+        if ($request->expectsJson() || $request->ajax()) {
+            $cartCount = array_sum(array_column($cart, 'quantity'));
+            return response()->json([
+                'success' => true,
+                'message' => 'Added to cart.',
+                'cart_count' => $cartCount,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Added to cart.');
     }
 
@@ -77,6 +86,19 @@ class CartController extends Controller
         }
 
         session(['cart' => $cart]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            $cartCount = array_sum(array_column($cart, 'quantity'));
+            $total = array_sum(array_map(function ($item) {
+                return $item['price'] * $item['quantity'];
+            }, $cart));
+            return response()->json([
+                'success' => true,
+                'cart_count' => $cartCount,
+                'total' => $total,
+            ]);
+        }
+
         return redirect()->route('cart');
     }
 
@@ -90,6 +112,18 @@ class CartController extends Controller
         $cart = session('cart', []);
         unset($cart[$key]);
         session(['cart' => $cart]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            $cartCount = array_sum(array_column($cart, 'quantity'));
+            $total = array_sum(array_map(function ($item) {
+                return $item['price'] * $item['quantity'];
+            }, $cart));
+            return response()->json([
+                'success' => true,
+                'cart_count' => $cartCount,
+                'total' => $total,
+            ]);
+        }
 
         return redirect()->route('cart');
     }

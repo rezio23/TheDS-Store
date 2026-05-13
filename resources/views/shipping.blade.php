@@ -54,7 +54,7 @@
                     <div class="shipping-form-row">
                         <div class="shipping-form-group shipping-form-group--wide">
                             <label for="ship-description">Description</label>
-                            <input type="text" id="ship-description" name="description" placeholder="Enter a description..." value="{{ old('description') }}">
+                            <input type="text" id="ship-description" name="description" placeholder="Enter a description...">
                         </div>
                     </div>
 

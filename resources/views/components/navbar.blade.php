@@ -1,9 +1,37 @@
 @php
 $cart = session('cart', []);
 $cartCount = array_sum(array_column($cart, 'quantity'));
+
+$headerId = match (true) {
+    request()->is('/') => 'home',
+    request()->routeIs('shop') => 'shop-top',
+    request()->routeIs('about') => 'about-top',
+    request()->routeIs('cart') => 'cart-top',
+    request()->routeIs('payment') => 'payment-top',
+    request()->routeIs('shipping') => 'shipping-top',
+    request()->routeIs('profile') => 'profile-top',
+    request()->routeIs('help-center') => 'help-top',
+    request()->routeIs('terms') => 'terms-top',
+    request()->routeIs('product.show') => 'product-top',
+    default => 'header-top',
+};
+
+$searchId = match ($headerId) {
+    'home' => 'header-product-search',
+    'shop-top' => 'header-product-search',
+    'about-top' => 'header-about-search',
+    'cart-top' => 'header-cart-search',
+    'payment-top' => 'header-payment-search',
+    'shipping-top' => 'header-shipping-search',
+    'profile-top' => 'header-profile-search',
+    'help-top' => 'header-help-search',
+    'terms-top' => 'header-terms-search',
+    'product-top' => 'header-product-search',
+    default => 'header-product-search',
+};
 @endphp
 
-<header class="site-header" id="header-top">
+<header class="site-header" id="{{ $headerId }}">
     <a class="brand-mark" href="{{ url('/') }}#home" aria-label="The DS home">the DS</a>
 
     <nav class="site-nav" aria-label="Primary navigation">
@@ -17,10 +45,10 @@ $cartCount = array_sum(array_column($cart, 'quantity'));
     <div class="header-actions" aria-label="Store actions">
         <div class="header-search" data-header-search>
             <div class="header-search-field">
-                <input class="header-search-input" id="header-product-search" data-product-search type="search" placeholder="Search products..." aria-label="Search products" autocomplete="off" tabindex="-1" aria-hidden="true">
+                <input class="header-search-input" id="{{ $searchId }}" data-product-search type="search" placeholder="Search products..." aria-label="Search products" autocomplete="off" tabindex="-1" aria-hidden="true">
                 <div class="header-search-results" data-header-search-results hidden></div>
             </div>
-            <button class="icon-button search-trigger" type="button" aria-label="Open search" aria-controls="header-product-search" aria-expanded="false" title="Search">
+            <button class="icon-button search-trigger" type="button" aria-label="Open search" aria-controls="{{ $searchId }}" aria-expanded="false" title="Search">
                 <i data-lucide="search"></i>
             </button>
         </div>
@@ -29,7 +57,7 @@ $cartCount = array_sum(array_column($cart, 'quantity'));
             <span class="bag-count" aria-live="polite">{{ $cartCount }}</span>
         </a>
         @auth
-            <a class="icon-button {{ request()->routeIs('profile') || request()->routeIs('profile.edit') ? 'is-active' : '' }}" href="{{ route('profile') }}" aria-label="Account profile" title="{{ Auth::user()->full_name }}">
+            <a class="icon-button {{ request()->routeIs('profile') || request()->routeIs('profile.edit') ? 'is-active' : '' }}" href="{{ route('profile') }}" aria-label="Account profile" title="{{ Auth::user()->full_name ?: 'Account' }}">
                 <i data-lucide="user-round"></i>
             </a>
         @else

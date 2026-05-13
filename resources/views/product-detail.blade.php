@@ -69,7 +69,7 @@
                     </div>
 
                     <figure class="product-hero-media">
-                        <img data-product-gallery-main src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
+                        <img data-product-gallery-main src="{{ asset('storage/' . ($gallery[0] ?? $product->image)) }}" alt="{{ $product->name }} product image">
                         <figcaption class="product-badges" aria-label="Product badges">
                             <span>{{ $product->badge }}</span>
                             <span>{{ $product->rating }} star</span>
@@ -80,19 +80,18 @@
                 <div class="product-detail-actions">
                     <form action="{{ route('cart.add') }}" method="post" class="detail-cart-form" style="display:inline;">
                         @csrf
+                        <input type="hidden" name="action" value="add">
                         <input type="hidden" name="slug" value="{{ $product->slug }}">
                         <input type="hidden" name="size" value="{{ $activeSize }}" id="detail-cart-size">
                         <button class="product-primary-button" type="submit" data-add-to-cart>
                             <span>Add to Cart</span>
                         </button>
                     </form>
-                    @auth
-                        <form action="{{ route('favorites.toggle') }}" method="post" style="display:inline;">
-                            @csrf
-                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <button class="product-secondary-button" type="submit">{{ $isFavorited ? 'Unfavorite' : 'Favorite' }}</button>
-                        </form>
-                    @endauth
+                    <form action="{{ route('favorites.toggle') }}" method="post" style="display:inline;">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <button class="product-secondary-button" type="submit">{{ $isFavorited ? 'Unfavorite' : 'Favorite' }}</button>
+                    </form>
                 </div>
             </div>
 
@@ -120,7 +119,7 @@
                         @foreach ($relatedProducts as $related)
                             @php
                                 $relatedGallery = array_filter(explode('|', $related->gallery ?? ''));
-                                $relatedImage = $relatedGallery[0] ?? $related->image;
+                                $relatedImage = $relatedGallery[0] ?? '';
                             @endphp
                             <a href="{{ route('product.show', ['slug' => $related->slug]) }}" aria-label="View {{ $related->name }}" title="{{ $related->name }}">
                                 <img src="{{ asset('storage/' . $relatedImage) }}" alt="{{ $related->name }}">
