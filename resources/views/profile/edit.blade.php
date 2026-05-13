@@ -27,7 +27,7 @@
 
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="edit-username">Username</label>
-                    <input class="edit-form-input" id="edit-username" name="username" type="text" value="@ {{ strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}" placeholder="e.g. johnsmith123" readonly>
+                    <input class="edit-form-input" id="edit-username" name="username" type="text" value="{{ '@' . strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}" placeholder="e.g. johnsmith123">
                 </div>
 
                 <div class="edit-form-group">

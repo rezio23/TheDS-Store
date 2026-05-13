@@ -99,14 +99,17 @@ class PageController extends Controller
 
     public function storeHelpRequest(Request $request)
     {
-        $request->validate([
-            'subject' => 'required|string|max:255',
-            'message' => 'required|string',
-            'attachment' => 'nullable|file|max:5120',
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:50',
+            'subject' => 'required|string|max:120',
+            'message' => 'required|string|max:2000',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf|max:2048',
         ]);
 
-        // Store help request logic here (can be extended to save to DB)
-        // For now, just flash a success message
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return redirect()->route('help-center')->with('success', 'Your request has been submitted. We will contact you soon.');
     }

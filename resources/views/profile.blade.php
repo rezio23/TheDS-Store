@@ -15,7 +15,7 @@
             <div class="profile-card">
                 <img class="profile-avatar" src="{{ $user->avatar ? asset('storage/' . $user->avatar) : 'https://i1.sndcdn.com/avatars-tDQKBExQks6cE0zh-HO3N7Q-t240x240.jpg' }}" alt="{{ $user->full_name }}">
                 <h1>{{ $user->full_name }}</h1>
-                <p>@ {{ strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}</p>
+                <p>{{ '@' . strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}</p>
 
                 <dl class="profile-detail-list">
                     <div>
@@ -211,7 +211,7 @@
                 </div>
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="edit-username">Username</label>
-                    <input class="edit-form-input" id="edit-username" name="username" type="text" value="@ {{ strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}" placeholder="e.g. johnsmith123">
+                    <input class="edit-form-input" id="edit-username" name="username" type="text" value="{{ '@' . strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}" placeholder="e.g. johnsmith123">
                 </div>
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="edit-gender">Gender</label>
