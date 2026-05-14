@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\UserRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -73,8 +74,11 @@ class PageController extends Controller
             $requestText = trim($request->input('request_text', ''));
             $requestEmail = trim($request->input('request_email', ''));
             $requestPhone = trim($request->input('request_phone', ''));
+            $requestSubject = trim($request->input('request_subject', ''));
 
-            if ($requestText === '') {
+            if ($requestSubject === '') {
+                $requestError = 'Please enter a subject.';
+            } elseif ($requestText === '') {
                 $requestError = 'Please describe your request.';
             } elseif ($requestEmail === '' || !filter_var($requestEmail, FILTER_VALIDATE_EMAIL)) {
                 $requestError = 'Please enter a valid email address.';
@@ -86,7 +90,7 @@ class PageController extends Controller
                     mkdir($uploadDir, 0755, true);
                 }
 
-                $uploadedFile = '';
+                $uploadedFile = null;
                 if ($request->hasFile('request_file') && $request->file('request_file')->isValid()) {
                     $file = $request->file('request_file');
                     $mimeType = $file->getMimeType();
@@ -97,28 +101,22 @@ class PageController extends Controller
                         $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalName);
                         $safeName = time() . '_' . $safeName;
                         $file->move($uploadDir, $safeName);
-                        $uploadedFile = $safeName;
+                        $uploadedFile = 'uploads/support/' . $safeName;
                     } else {
                         $requestError = 'Invalid file type or upload failed.';
                     }
                 }
 
                 if ($requestError === '') {
-                    $logFile = $uploadDir . '/requests.json';
-                    $requests = [];
-                    if (file_exists($logFile)) {
-                        $requests = json_decode(file_get_contents($logFile), true) ?: [];
-                    }
-                    $requests[] = [
-                        'id' => uniqid('req_', true),
-                        'email' => $requestEmail,
+                    UserRequest::create([
+                        'user_id' => auth()->id(),
                         'phone' => $requestPhone,
-                        'text' => $requestText,
-                        'file' => $uploadedFile,
+                        'email' => $requestEmail,
+                        'subject' => $requestSubject,
+                        'message' => $requestText,
+                        'attachment' => $uploadedFile,
                         'status' => 'pending',
-                        'created_at' => now()->format('Y-m-d H:i:s'),
-                    ];
-                    file_put_contents($logFile, json_encode($requests, JSON_PRETTY_PRINT));
+                    ]);
                     $requestSuccess = true;
                 }
             }

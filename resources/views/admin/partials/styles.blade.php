@@ -931,4 +931,79 @@ button {
 .admin-panel-content[hidden] {
     display: none;
 }
+
+/* ===== File Upload (shared with help request form) ===== */
+.help-request-form__file {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border: 2px dashed rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    background: #faf8f5;
+    cursor: pointer;
+    transition: border-color 180ms ease, background 180ms ease;
+    width: 100%;
+}
+
+.help-request-form__file:hover {
+    border-color: var(--accent);
+    background: #fff;
+}
+
+.help-request-form__file:focus-within {
+    border-color: var(--accent);
+    background: #fff;
+    outline: 2px solid rgba(192, 107, 0, 0.2);
+    outline-offset: 2px;
+}
+
+.help-request-form__file input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.help-request-form__file-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(192, 107, 0, 0.08);
+    color: var(--accent);
+}
+
+.help-request-form__file-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.help-request-form__file-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.help-request-form__file-meta {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: rgba(0,0,0,0.35);
+}
+
+.help-request-form__label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
 </style>

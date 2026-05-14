@@ -165,60 +165,60 @@
 
     <!-- Personal Request Modal -->
     <div class="help-request-overlay" id="help-request-overlay" aria-hidden="true">
-        <div class="help-request-modal" role="dialog" aria-modal="true" aria-labelledby="help-request-title">
+        <div class="help-request-modal" role="dialog" aria-modal="true" aria-labelledby="help-request-modal-title">
             <button type="button" class="help-request-modal__close" id="help-request-close" aria-label="Close">
                 <i data-lucide="x"></i>
             </button>
-            <h2 id="help-request-title">Personal Request</h2>
-            <p class="help-request-modal__sub">Describe your issue and attach a file if needed. We will reply via email.</p>
+            <div class="help-request-modal__content">
+                <div style="text-align:center;margin-bottom:22px;">
+                    <h2 id="help-request-modal-title" style="margin:0 0 6px;">Send a Personal Request</h2>
+                    <p class="pixel-note" style="margin:0;">Describe what you need and we will review it as soon as possible.</p>
+                </div>
 
-            @if ($requestSuccess)
-                <div class="help-request-alert help-request-alert--success">
-                    <i data-lucide="check-circle"></i>
-                    <span>Your request has been submitted successfully.</span>
-                </div>
-            @elseif ($requestError !== '')
-                <div class="help-request-alert help-request-alert--error">
-                    <i data-lucide="alert-circle"></i>
-                    <span>{{ $requestError }}</span>
-                </div>
-            @endif
+                @if ($requestSuccess)
+                    <p class="help-request__success" id="request-success">
+                        <i data-lucide="check-circle-2"></i> Your request has been sent successfully.
+                    </p>
+                @elseif ($requestError !== '')
+                    <p class="help-request__error" id="request-error">{{ $requestError }}</p>
+                @endif
 
-            <form method="post" action="{{ route('help-center') }}" enctype="multipart/form-data" class="help-request-form">
-                @csrf
-                <input type="hidden" name="personal_request" value="1">
-                @php
-                    $prefillEmail = old('request_email', Auth::user()?->email ?? '');
-                @endphp
-                <div class="help-request-group">
-                    <label for="request-email">Email</label>
-                    <input type="email" id="request-email" name="request_email" placeholder="you@example.com" required
-                        value="{{ $prefillEmail }}">
-                </div>
-                <div class="help-request-group">
-                    <label for="request-phone">Phone Number</label>
-                    <input type="tel" id="request-phone" name="request_phone" placeholder="+855 112 233" required
-                        value="{{ old('request_phone', '') }}">
-                </div>
-                <div class="help-request-group">
-                    <label for="request-text">Your Request</label>
-                    <textarea id="request-text" name="request_text" rows="5" placeholder="Describe what you need help with..." required>{{ old('request_text', '') }}</textarea>
-                </div>
-                <div class="help-request-group">
-                    <label for="request-file">Attachment (optional)</label>
-                    <div class="help-request-file">
-                        <input type="file" id="request-file" name="request_file" accept="image/*,.pdf,.txt" class="help-request-file__input" onchange="var n=this.files[0]?this.files[0].name:'No file chosen'; document.getElementById('request-file-name').textContent=n; document.getElementById('request-file-name').classList.toggle('is-empty', !this.files.length);">
-                        <label for="request-file" class="help-request-file__btn">
-                            <i data-lucide="upload-cloud"></i> Choose File
-                        </label>
-                        <span id="request-file-name" class="help-request-file__name is-empty">No file chosen</span>
+                <form method="post" action="{{ route('help-center') }}" enctype="multipart/form-data" class="help-request-form" id="help-request-form">
+                    @csrf
+                    <input type="hidden" name="personal_request" value="1">
+                    @php
+                        $prefillEmail = old('request_email', Auth::user()?->email ?? '');
+                    @endphp
+                    <div class="help-request-form__group">
+                        <label class="help-request-form__label" for="request-email">Email</label>
+                        <input class="help-request-form__input" id="request-email" name="request_email" type="email" placeholder="you@example.com" required value="{{ $prefillEmail }}">
                     </div>
-                    <span class="help-request-hint">Max 5MB. Images, PDF, or text files accepted.</span>
-                </div>
-                <button type="submit" class="help-request-submit">
-                    <i data-lucide="send"></i> Submit Request
-                </button>
-            </form>
+                    <div class="help-request-form__group">
+                        <label class="help-request-form__label" for="request-phone">Phone</label>
+                        <input class="help-request-form__input" id="request-phone" name="request_phone" type="tel" placeholder="+855 112 233" required value="{{ old('request_phone', '') }}">
+                    </div>
+                    <div class="help-request-form__group">
+                        <label class="help-request-form__label" for="request-subject">Subject</label>
+                        <input class="help-request-form__input" id="request-subject" name="request_subject" type="text" maxlength="120" placeholder="What is this about?" required value="{{ old('request_subject', '') }}">
+                    </div>
+                    <div class="help-request-form__group">
+                        <label class="help-request-form__label" for="request-text">Message</label>
+                        <textarea class="help-request-form__textarea" id="request-text" name="request_text" rows="4" maxlength="2000" placeholder="Tell us the details..." required>{{ old('request_text', '') }}</textarea>
+                    </div>
+                    <div class="help-request-form__group">
+                        <label class="help-request-form__label" for="request-file">Attachment (optional)</label>
+                        <div class="help-request-form__file">
+                            <span class="help-request-form__file-icon"><i data-lucide="upload-cloud"></i></span>
+                            <span class="help-request-form__file-text" id="request-file-text">Click to choose a file</span>
+                            <span class="help-request-form__file-meta">Images &amp; PDF only</span>
+                            <input id="request-file" name="request_file" type="file" accept="image/*,application/pdf" aria-label="Attachment" onchange="var n=this.files[0]?this.files[0].name:'Click to choose a file'; document.getElementById('request-file-text').textContent=n;">
+                        </div>
+                    </div>
+                    <div class="help-request-form__actions">
+                        <button type="submit" class="help-request-form__submit">Submit Request</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 @endsection

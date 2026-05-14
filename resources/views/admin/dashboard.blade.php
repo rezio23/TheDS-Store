@@ -566,8 +566,13 @@
                             <textarea id="ann-message" name="message" rows="6" placeholder="Write your announcement here..." maxlength="2000" required></textarea>
                         </div>
                         <div class="admin-form-group admin-form-group--full">
-                            <label for="ann-file">Attachment (optional)</label>
-                            <input id="ann-file" name="attachment" type="file" accept="image/*,application/pdf" aria-label="Attachment">
+                            <label class="help-request-form__label" for="ann-file">Attachment (optional)</label>
+                            <div class="help-request-form__file">
+                                <span class="help-request-form__file-icon"><i data-lucide="upload-cloud"></i></span>
+                                <span class="help-request-form__file-text" id="ann-file-text">Click to choose a file</span>
+                                <span class="help-request-form__file-meta">Images &amp; PDF only</span>
+                                <input id="ann-file" name="attachment" type="file" accept="image/*,application/pdf" aria-label="Attachment" onchange="var n=this.files[0]?this.files[0].name:'Click to choose a file'; document.getElementById('ann-file-text').textContent=n;">
+                            </div>
                         </div>
                     </div>
                     <div class="admin-form-actions" style="margin-top: 14px;">
