@@ -23,14 +23,25 @@ class FavoriteController extends Controller
 
         if ($favorite) {
             $favorite->delete();
-            return redirect()->back()->with('success', 'Removed from favorites.');
+            $message = 'Removed from favorites.';
+            $favorited = false;
+        } else {
+            Favorite::create([
+                'user_id' => $user->id,
+                'product_id' => $productId,
+            ]);
+            $message = 'Added to favorites.';
+            $favorited = true;
         }
 
-        Favorite::create([
-            'user_id' => $user->id,
-            'product_id' => $productId,
-        ]);
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'favorited' => $favorited,
+            ]);
+        }
 
-        return redirect()->back()->with('success', 'Added to favorites.');
+        return redirect()->back()->with('success', $message);
     }
 }

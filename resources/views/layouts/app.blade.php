@@ -25,6 +25,72 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('assets/js/app.js') }}"></script>
 
+    <script>
+    (function() {
+        var toastEl = document.createElement('div');
+        toastEl.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#111;color:#fff;padding:12px 20px;border-radius:8px;font-size:0.9rem;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+        document.body.appendChild(toastEl);
+
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.style.opacity = '1';
+            setTimeout(function() { toastEl.style.opacity = '0'; }, 2500);
+        }
+
+        function updateBagCount(count) {
+            var badge = document.querySelector('.bag-count');
+            if (badge) badge.textContent = count;
+        }
+
+        function submitFormViaFetch(form, btn) {
+            var formData = new FormData(form);
+            var action = form.getAttribute('action');
+            btn.disabled = true;
+            fetch(action, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            }).then(function(res) { return res.json(); }).then(function(data) {
+                btn.disabled = false;
+                if (data && data.success) {
+                    showToast(data.message || 'Saved.');
+                    if (typeof data.cart_count !== 'undefined') updateBagCount(data.cart_count);
+                    if (typeof data.favorited !== 'undefined' && btn) {
+                        btn.textContent = data.favorited ? 'Unfavorite' : 'Favorite';
+                    }
+                } else {
+                    showToast('Something went wrong.');
+                }
+            }).catch(function() {
+                btn.disabled = false;
+                showToast('Something went wrong.');
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            var cartBtn = e.target.closest('[data-add-to-cart]');
+            if (cartBtn) {
+                var form = cartBtn.closest('form');
+                if (form) {
+                    e.preventDefault();
+                    submitFormViaFetch(form, cartBtn);
+                    return;
+                }
+            }
+            var favBtn = e.target.closest('[data-add-to-favorite]');
+            if (favBtn) {
+                var form = favBtn.closest('form');
+                if (form) {
+                    e.preventDefault();
+                    submitFormViaFetch(form, favBtn);
+                    return;
+                }
+            }
+        });
+    })();
+    </script>
+
     @stack('scripts')
 </body>
 </html>

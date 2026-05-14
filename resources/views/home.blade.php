@@ -241,10 +241,15 @@
                                 @endif
                                 <div class="product-actions">
                                     <strong>${{ number_format($product->price, 2) }}</strong>
-                                    <button class="cart-button" type="button" data-add-to-cart>
-                                        <span>Add to Cart</span>
-                                        <i data-lucide="arrow-right"></i>
-                                    </button>
+                                    <form action="{{ route('cart.add') }}" method="post" style="display:inline;">
+                                        @csrf
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="slug" value="{{ $product->slug }}">
+                                        <button class="cart-button" type="submit" data-add-to-cart>
+                                            <span>Add to Cart</span>
+                                            <i data-lucide="arrow-right"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </article>
                         @endforeach

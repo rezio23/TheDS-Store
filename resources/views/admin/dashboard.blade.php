@@ -450,8 +450,35 @@
                                 <td>{{ $product->categoryModel->name ?? '—' }}</td>
                                 <td>
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                                        <button type="button" class="admin-btn admin-btn--small">View</button>
-                                        <button type="button" class="admin-btn admin-btn--small">Edit</button>
+                                        <button type="button" class="admin-btn admin-btn--small" data-product-view
+                                            data-p-id="{{ $product->id }}"
+                                            data-p-slug="{{ $product->slug }}"
+                                            data-p-name="{{ $product->name }}"
+                                            data-p-brand="{{ $product->brand }}"
+                                            data-p-price="{{ $product->price }}"
+                                            data-p-stock="{{ $product->stock ?? 0 }}"
+                                            data-p-category="{{ $product->categoryModel->name ?? '—' }}"
+                                            data-p-tags="{{ $product->tags ?? '' }}"
+                                            data-p-badge="{{ $product->badge ?? '' }}"
+                                            data-p-rating="{{ $product->rating ?? '' }}"
+                                            data-p-image="{{ asset('storage/' . $product->image) }}"
+                                            data-p-gallery="{{ $product->gallery ?? '' }}"
+                                            data-p-description="{{ htmlspecialchars($product->description ?? '', ENT_QUOTES, 'UTF-8') }}"
+                                        >View</button>
+                                        <button type="button" class="admin-btn admin-btn--small" data-product-edit
+                                            data-p-id="{{ $product->id }}"
+                                            data-p-name="{{ htmlspecialchars($product->name, ENT_QUOTES, 'UTF-8') }}"
+                                            data-p-brand="{{ htmlspecialchars($product->brand, ENT_QUOTES, 'UTF-8') }}"
+                                            data-p-price="{{ $product->price }}"
+                                            data-p-stock="{{ $product->stock ?? 0 }}"
+                                            data-p-category="{{ $product->category ?? '' }}"
+                                            data-p-tags="{{ htmlspecialchars($product->tags ?? '', ENT_QUOTES, 'UTF-8') }}"
+                                            data-p-badge="{{ htmlspecialchars($product->badge ?? '', ENT_QUOTES, 'UTF-8') }}"
+                                            data-p-rating="{{ htmlspecialchars($product->rating ?? '', ENT_QUOTES, 'UTF-8') }}"
+                                            data-p-image="{{ htmlspecialchars($product->image ?? '', ENT_QUOTES, 'UTF-8') }}"
+                                            data-p-gallery="{{ htmlspecialchars($product->gallery ?? '', ENT_QUOTES, 'UTF-8') }}"
+                                            data-p-description="{{ htmlspecialchars($product->description ?? '', ENT_QUOTES, 'UTF-8') }}"
+                                        >Edit</button>
                                         <form method="post" action="{{ route('admin.dashboard') }}?tab=products" onsubmit="return confirm('Delete this product?');" style="display:inline;">
                                             @csrf
                                             <input type="hidden" name="product_id" value="{{ $product->id }}">
@@ -464,6 +491,208 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Product View Modal -->
+            <div id="product-view-modal" class="admin-product-overlay">
+                <div class="admin-product-modal">
+                    <button type="button" class="admin-product-modal__close" onclick="document.getElementById('product-view-modal').classList.remove('is-open');">
+                        <i data-lucide="x"></i>
+                    </button>
+                    <div class="admin-product-modal__info">
+                        <h2 id="pv-name"></h2>
+                        <span class="admin-product-modal__badge" id="pv-badge"></span>
+                        <div class="admin-product-modal__meta">
+                            <div><span>ID</span><strong id="pv-id"></strong></div>
+                            <div><span>Brand</span><strong id="pv-brand"></strong></div>
+                            <div><span>Price</span><strong id="pv-price"></strong></div>
+                            <div><span>Stock</span><strong id="pv-stock"></strong></div>
+                            <div><span>Category</span><strong id="pv-category"></strong></div>
+                            <div><span>Rating</span><strong id="pv-rating"></strong></div>
+                        </div>
+                        <div class="admin-product-modal__tags" id="pv-tags"></div>
+                        <p class="admin-product-modal__desc" id="pv-description"></p>
+                    </div>
+                    <div class="admin-product-modal__media">
+                        <img id="pv-hero" class="admin-product-modal__hero" src="" alt="">
+                        <div class="admin-product-modal__gallery" id="pv-gallery"></div>
+                    </div>
+                    <div class="admin-product-modal__foot">
+                        <span>Slug: <span id="pv-slug"></span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Edit Modal -->
+            <div id="product-edit-modal" class="admin-product-overlay">
+                <div class="admin-product-modal" style="width: min(620px, 100%);">
+                    <button type="button" class="admin-product-modal__close" onclick="document.getElementById('product-edit-modal').classList.remove('is-open');">
+                        <i data-lucide="x"></i>
+                    </button>
+                    <div class="admin-product-modal__info">
+                        <h2>Edit Product</h2>
+                    </div>
+                    <form method="post" action="{{ route('admin.dashboard') }}?tab=products" id="product-edit-form">
+                        @csrf
+                        <input type="hidden" name="product_id" id="pe-id">
+                        <div class="admin-form-grid" style="grid-template-columns: 1fr 1fr; margin-top: 18px;">
+                            <div class="admin-form-group">
+                                <label>Name</label>
+                                <input type="text" name="name" id="pe-name" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Brand</label>
+                                <input type="text" name="brand" id="pe-brand" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Price</label>
+                                <input type="number" name="price" id="pe-price" step="0.01" min="0.01" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Stock</label>
+                                <input type="number" name="stock" id="pe-stock" min="0" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Category</label>
+                                <div class="admin-select-control" data-admin-select style="width:100%;border-radius:8px;">
+                                    <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="pe-cat-menu" style="width:100%;">
+                                        <span data-admin-select-current id="pe-cat-label">— Select Category —</span>
+                                        <i data-lucide="chevron-down"></i>
+                                    </button>
+                                    <div class="admin-select-menu" id="pe-cat-menu" role="listbox" data-admin-select-menu>
+                                        <button type="button" role="option" data-admin-select-option data-value="" class="is-selected" aria-selected="true">— Select Category —</button>
+                                        @foreach ($allCategories as $cat)
+                                            <button type="button" role="option" data-admin-select-option data-value="{{ $cat->slug }}" aria-selected="false">{{ $cat->name }}</button>
+                                        @endforeach
+                                    </div>
+                                    <input type="hidden" name="category" id="pe-category" value="">
+                                </div>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Badge</label>
+                                <input type="text" name="badge" id="pe-badge" placeholder="e.g. New, Sale">
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Rating</label>
+                                <input type="text" name="rating" id="pe-rating" placeholder="e.g. 4.5">
+                            </div>
+                            <div class="admin-form-group admin-form-group--full">
+                                <label>Image URL</label>
+                                <input type="url" name="image" id="pe-image" required>
+                            </div>
+                            <div class="admin-form-group admin-form-group--full">
+                                <label>Gallery Images (pipe-separated URLs)</label>
+                                <input type="text" name="gallery" id="pe-gallery" placeholder="https://example.com/1.png|https://example.com/2.png">
+                            </div>
+                            <div class="admin-form-group admin-form-group--full">
+                                <label>Tags (comma-separated)</label>
+                                <input type="text" name="tags" id="pe-tags" placeholder="e.g. sneaker, man, popular">
+                            </div>
+                            <div class="admin-form-group admin-form-group--full">
+                                <label>Description</label>
+                                <textarea name="description" id="pe-description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="admin-form-actions" style="margin-top: 18px;">
+                            <button type="submit" name="edit_product" class="admin-btn">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+            (function() {
+                var viewModal = document.getElementById('product-view-modal');
+                var editModal = document.getElementById('product-edit-modal');
+
+                function closeOnOverlay(e, modal) {
+                    if (e.target === modal) modal.classList.remove('is-open');
+                }
+                viewModal.addEventListener('click', function(e) { closeOnOverlay(e, viewModal); });
+                editModal.addEventListener('click', function(e) { closeOnOverlay(e, editModal); });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        viewModal.classList.remove('is-open');
+                        editModal.classList.remove('is-open');
+                    }
+                });
+
+                // View
+                document.querySelectorAll('[data-product-view]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        document.getElementById('pv-id').textContent = btn.getAttribute('data-p-id');
+                        document.getElementById('pv-name').textContent = btn.getAttribute('data-p-name');
+                        document.getElementById('pv-slug').textContent = btn.getAttribute('data-p-slug');
+                        document.getElementById('pv-brand').textContent = btn.getAttribute('data-p-brand');
+                        document.getElementById('pv-price').textContent = '$' + parseFloat(btn.getAttribute('data-p-price')).toFixed(2);
+                        document.getElementById('pv-stock').textContent = btn.getAttribute('data-p-stock');
+                        document.getElementById('pv-category').textContent = btn.getAttribute('data-p-category');
+                        document.getElementById('pv-rating').textContent = btn.getAttribute('data-p-rating') || '—';
+
+                        var badge = btn.getAttribute('data-p-badge');
+                        var badgeEl = document.getElementById('pv-badge');
+                        if (badge) { badgeEl.textContent = badge; badgeEl.style.display = 'inline-block'; }
+                        else { badgeEl.style.display = 'none'; }
+
+                        var tags = btn.getAttribute('data-p-tags');
+                        var tagsEl = document.getElementById('pv-tags');
+                        if (tags) {
+                            tagsEl.innerHTML = tags.split(',').map(function(t) { return '<span>' + t.trim() + '</span>'; }).join('');
+                            tagsEl.style.display = 'flex';
+                        } else { tagsEl.innerHTML = ''; tagsEl.style.display = 'none'; }
+
+                        var desc = btn.getAttribute('data-p-description');
+                        var descEl = document.getElementById('pv-description');
+                        if (desc) { descEl.textContent = desc; descEl.style.display = 'block'; }
+                        else { descEl.style.display = 'none'; }
+
+                        document.getElementById('pv-hero').src = btn.getAttribute('data-p-image');
+
+                        var gallery = btn.getAttribute('data-p-gallery');
+                        var galleryEl = document.getElementById('pv-gallery');
+                        if (gallery) {
+                            galleryEl.innerHTML = gallery.split('|').map(function(u) {
+                                return u.trim() ? '<img class="admin-product-modal__thumb" src="{{ asset('storage') }}/' + u.trim() + '" alt="">' : '';
+                            }).join('');
+                        } else { galleryEl.innerHTML = ''; }
+
+                        if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: viewModal.querySelectorAll('i[data-lucide]') });
+                        viewModal.classList.add('is-open');
+                    });
+                });
+
+                // Edit
+                document.querySelectorAll('[data-product-edit]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        document.getElementById('pe-id').value = btn.getAttribute('data-p-id');
+                        document.getElementById('pe-name').value = btn.getAttribute('data-p-name');
+                        document.getElementById('pe-brand').value = btn.getAttribute('data-p-brand');
+                        document.getElementById('pe-price').value = btn.getAttribute('data-p-price');
+                        document.getElementById('pe-stock').value = btn.getAttribute('data-p-stock');
+                        document.getElementById('pe-category').value = btn.getAttribute('data-p-category');
+                        document.getElementById('pe-badge').value = btn.getAttribute('data-p-badge');
+                        document.getElementById('pe-rating').value = btn.getAttribute('data-p-rating');
+                        document.getElementById('pe-image').value = btn.getAttribute('data-p-image');
+                        document.getElementById('pe-gallery').value = btn.getAttribute('data-p-gallery');
+                        document.getElementById('pe-tags').value = btn.getAttribute('data-p-tags');
+                        document.getElementById('pe-description').value = btn.getAttribute('data-p-description');
+
+                        // Update custom select label
+                        var catVal = btn.getAttribute('data-p-category');
+                        var catLabel = '— Select Category —';
+                        document.querySelectorAll('#pe-cat-menu [data-admin-select-option]').forEach(function(opt) {
+                            opt.classList.toggle('is-selected', opt.getAttribute('data-value') === catVal);
+                            opt.setAttribute('aria-selected', opt.getAttribute('data-value') === catVal ? 'true' : 'false');
+                            if (opt.getAttribute('data-value') === catVal) catLabel = opt.textContent;
+                        });
+                        document.getElementById('pe-cat-label').textContent = catLabel;
+
+                        if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: editModal.querySelectorAll('i[data-lucide]') });
+                        editModal.classList.add('is-open');
+                    });
+                });
+            })();
+            </script>
 
         @elseif ($activeTab === 'users')
             <div class="admin-header">
@@ -508,6 +737,7 @@
                             <th>Email</th>
                             <th>Phone</th>
                             <th>Subject</th>
+                            <th>File</th>
                             <th>Status</th>
                             <th>Date</th>
                             <th>Action</th>
@@ -515,15 +745,37 @@
                     </thead>
                     <tbody>
                         @foreach ($allRequests as $req)
+                            @php
+                                $ext = $req->attachment ? pathinfo($req->attachment, PATHINFO_EXTENSION) : '';
+                                $isImage = in_array(strtolower($ext), ['jpg','jpeg','png','gif','webp'], true);
+                            @endphp
                             <tr>
                                 <td>#{{ $req->id }}</td>
                                 <td>{{ $req->email }}</td>
                                 <td>{{ $req->phone ?? '—' }}</td>
                                 <td>{{ $req->subject }}</td>
+                                <td>
+                                    @if ($req->attachment)
+                                        <span style="display:inline-flex;align-items:center;gap:4px;color:#2a9d8f;font-size:0.7rem;"
+                                              title="Has {{ $isImage ? 'image' : strtoupper($ext) }}"
+                                              data-req-file="{{ $req->attachment }}"
+                                              data-req-file-type="{{ $isImage ? 'image' : strtoupper($ext) }}">
+                                            <i data-lucide="paperclip" style="width:12px;height:12px;"></i>
+                                            @if ($isImage)
+                                                Image
+                                            @else
+                                                {{ strtoupper($ext) }}
+                                            @endif
+                                        </span>
+                                    @else
+                                        <span style="color:#bbb;font-size:0.7rem;" title="No attachment">—</span>
+                                    @endif
+                                </td>
                                 <td><span class="admin-badge-status status-{{ $req->status }}">{{ ucfirst($req->status) }}</span></td>
                                 <td>{{ $req->created_at->format('M d, Y H:i') }}</td>
                                 <td>
-                                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                                        <button type="button" class="admin-btn admin-btn--small" data-req-view data-req-id="{{ $req->id }}" data-req-email="{{ $req->email }}" data-req-phone="{{ $req->phone ?? '—' }}" data-req-subject="{{ $req->subject }}" data-req-message="{{ htmlspecialchars($req->message, ENT_QUOTES, 'UTF-8') }}" data-req-attachment="{{ $req->attachment ? asset('storage/' . $req->attachment) : '' }}" data-req-file-type="{{ $isImage ? 'image' : strtoupper($ext) }}">View</button>
                                         @if ($req->status === 'pending')
                                             <form method="post" action="{{ route('admin.dashboard') }}?tab=requests" style="display:inline;">
                                                 @csrf
@@ -547,6 +799,99 @@
                     </tbody>
                 </table>
             </div>
+
+            <div id="req-modal" class="admin-request-overlay">
+                <div class="admin-request-modal">
+                    <button type="button" class="admin-request-modal__close" onclick="document.getElementById('req-modal').classList.remove('is-open');">
+                        <i data-lucide="x"></i>
+                    </button>
+
+                    <div class="admin-request-modal__head">
+                        <span class="req-meta">User Request</span>
+                        <h2 id="req-modal-subject"></h2>
+                    </div>
+
+                    <div class="admin-request-modal__body">
+                        <div class="admin-request-meta-grid">
+                            <div class="meta-item">
+                                <span>Request ID</span>
+                                <strong id="req-modal-id"></strong>
+                            </div>
+                            <div class="meta-item">
+                                <span>Email</span>
+                                <strong id="req-modal-email"></strong>
+                            </div>
+                            <div class="meta-item">
+                                <span>Phone</span>
+                                <strong id="req-modal-phone"></strong>
+                            </div>
+                        </div>
+
+                        <div class="admin-request-field">
+                            <span class="admin-request-field__label">Message</span>
+                            <div id="req-modal-message" class="admin-request-field__value"></div>
+                        </div>
+
+                        <div id="req-modal-file-wrap" class="admin-request-field" style="display:none;">
+                            <span class="admin-request-field__label">Attachment</span>
+                            <div id="req-modal-file"></div>
+                        </div>
+                    </div>
+
+                    <div class="admin-request-modal__foot">
+                        <button type="button" class="admin-btn" style="background:var(--ink);" onclick="document.getElementById('req-modal').classList.remove('is-open');">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+            (function() {
+                var modal = document.getElementById('req-modal');
+
+                function closeReqModal() {
+                    modal.classList.remove('is-open');
+                }
+
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) closeReqModal();
+                });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+                        closeReqModal();
+                    }
+                });
+
+                document.querySelectorAll('[data-req-view]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        document.getElementById('req-modal-id').textContent = '#' + btn.getAttribute('data-req-id');
+                        document.getElementById('req-modal-subject').textContent = btn.getAttribute('data-req-subject');
+                        document.getElementById('req-modal-email').textContent = btn.getAttribute('data-req-email');
+                        document.getElementById('req-modal-phone').textContent = btn.getAttribute('data-req-phone');
+                        document.getElementById('req-modal-message').textContent = btn.getAttribute('data-req-message');
+
+                        var fileWrap = document.getElementById('req-modal-file-wrap');
+                        var fileBox = document.getElementById('req-modal-file');
+                        var attachment = btn.getAttribute('data-req-attachment');
+                        var fileType = btn.getAttribute('data-req-file-type');
+                        if (attachment) {
+                            fileWrap.style.display = 'block';
+                            if (fileType === 'image') {
+                                fileBox.innerHTML = '<a href="' + attachment + '" target="_blank" class="admin-request-attachment"><img src="' + attachment + '" alt="Attachment" style="max-width:100%;height:auto;display:block;border-radius:10px;"></a>';
+                            } else {
+                                fileBox.innerHTML = '<a href="' + attachment + '" target="_blank" class="admin-request-download"><i data-lucide="download"></i>Download ' + fileType + '</a>';
+                            }
+                            if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: fileBox.querySelectorAll('i[data-lucide]') });
+                        } else {
+                            fileWrap.style.display = 'none';
+                            fileBox.innerHTML = '';
+                        }
+
+                        modal.classList.add('is-open');
+                    });
+                });
+            })();
+            </script>
 
         @elseif ($activeTab === 'announcements')
             <div class="admin-header">

@@ -13,16 +13,10 @@
         <div class="auth-success" style="color: #2a9d8f; margin-bottom: 1rem; font-size: 0.9rem;">Account created successfully. Please log in.</div>
     @endif
 
-    <form class="auth-form" method="POST" action="{{ route('login') }}">
+    <form class="auth-form" id="login-form" method="POST" action="{{ route('login') }}">
         @csrf
 
-        @if ($errors->any())
-            <div class="auth-errors" style="color: #e63946; margin-bottom: 1rem; font-size: 0.9rem;">
-                @foreach ($errors->all() as $error)
-                    <p style="margin: 0.25rem 0;">{{ $error }}</p>
-                @endforeach
-            </div>
-        @endif
+        <div id="login-errors" class="auth-errors" style="color: #e63946; margin-bottom: 1rem; font-size: 0.9rem; display: none;"></div>
 
         <div class="edit-form-group">
             <label class="edit-form-label" for="login-email">Email</label>
@@ -43,6 +37,54 @@
             <button type="submit" class="edit-form-button edit-form-button--submit edit-form-button--full">Log In</button>
         </div>
     </form>
+
+    <script>
+    (function() {
+        var form = document.getElementById('login-form');
+        var errorBox = document.getElementById('login-errors');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorBox.style.display = 'none';
+            errorBox.innerHTML = '';
+
+            var formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            }).then(function(response) {
+                var url = response.url;
+                if (url.indexOf('/profile') !== -1 || url.indexOf('/admin') !== -1) {
+                    window.location.href = url;
+                    return;
+                }
+                return response.text().then(function(html) {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+                    var errorContainer = doc.querySelector('#login-errors, .auth-errors');
+                    if (errorContainer && errorContainer.innerHTML.trim()) {
+                        errorBox.innerHTML = errorContainer.innerHTML;
+                        errorBox.style.display = 'block';
+                        return;
+                    }
+                    var errorList = doc.querySelectorAll('[data-validation-error], .input-error');
+                    if (errorList.length) {
+                        var msg = Array.from(errorList).map(function(el) { return el.textContent; }).join('<br>');
+                        errorBox.innerHTML = msg;
+                        errorBox.style.display = 'block';
+                        return;
+                    }
+                    errorBox.textContent = 'Login failed. Please check your credentials.';
+                    errorBox.style.display = 'block';
+                });
+            }).catch(function() {
+                errorBox.textContent = 'Something went wrong. Please try again.';
+                errorBox.style.display = 'block';
+            });
+        });
+    })();
+    </script>
 
     <p class="auth-footer">
         Don't have an account? <a href="{{ route('register') }}">Create an account</a>

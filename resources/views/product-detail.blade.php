@@ -90,7 +90,7 @@
                     <form action="{{ route('favorites.toggle') }}" method="post" style="display:inline;">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
-                        <button class="product-secondary-button" type="submit">{{ $isFavorited ? 'Unfavorite' : 'Favorite' }}</button>
+                        <button class="product-secondary-button" type="submit" data-add-to-favorite>{{ $isFavorited ? 'Unfavorite' : 'Favorite' }}</button>
                     </form>
                 </div>
             </div>
