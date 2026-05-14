@@ -24,7 +24,7 @@
         </div>
 
         <figure class="hero-model">
-            <img src="https://wallpapers.com/images/hd/high-top-nike-sneakers-png-plu11-rhcegylkjkwb4db9.png" alt="High top Nike sneakers">
+            <img src="{{ asset('assets/images/external/hero-nike-sneakers.png') }}" alt="High top Nike sneakers">
         </figure>
 
         <div class="hero-sidecopy">

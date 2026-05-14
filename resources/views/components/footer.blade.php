@@ -5,16 +5,16 @@
 
         <div class="footer-socials" aria-label="Social links">
             <a class="footer-social" href="#" aria-label="Facebook" title="Facebook">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/e/ee/Logo_de_Facebook.png" alt="">
+                <img src="{{ asset('assets/images/external/social-facebook.png') }}" alt="">
             </a>
             <a class="footer-social" href="#" aria-label="Telegram" title="Telegram">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/960px-Telegram_logo.svg.png" alt="">
+                <img src="{{ asset('assets/images/external/social-telegram.png') }}" alt="">
             </a>
             <a class="footer-social" href="#" aria-label="Instagram" title="Instagram">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/3840px-Instagram_logo_2016.svg.png" alt="">
+                <img src="{{ asset('assets/images/external/social-instagram.png') }}" alt="">
             </a>
             <a class="footer-social" href="#" aria-label="TikTok" title="TikTok">
-                <img src="https://img.freepik.com/premium-vector/tik-tok-logo_578229-290.jpg?semt=ais_hybrid&amp;w=740&amp;q=80" alt="">
+                <img src="{{ asset('assets/images/external/social-tiktok.jpg') }}" alt="">
             </a>
         </div>
     </section>

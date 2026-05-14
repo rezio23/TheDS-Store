@@ -1150,7 +1150,7 @@ main {
             rgba(255, 250, 240, 0.42) 84%,
             rgba(255, 250, 240, 0.18) 100%
         ),
-        url("https://113459eac7a2149130f7-75c8f84068801b543de8b4290b0c9293.ssl.cf1.rackcdn.com/HO16_MT_Nike_Pro_Hypercool_001-1.jpg") center top / cover no-repeat;
+        url("../images/external/nike-pro-hypercool-bg.jpg") center top / cover no-repeat;
 }
 
 .section-heading--products {

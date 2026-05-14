@@ -7,7 +7,7 @@
     <main class="shop-main">
         <section class="shop-hero" aria-label="Luxury fragrance shop banner">
             <figure class="shop-hero-model">
-                <img src="https://www.pngall.com/wp-content/uploads/13/Nike-Shoes-Air-Max-PNG-Images.png" alt="Nike Air Max shoes">
+                <img src="{{ asset('assets/images/external/shop-hero-nike.png') }}" alt="Nike Air Max shoes">
             </figure>
 
             <div class="shop-hero-copy">

@@ -13,7 +13,7 @@
 
         <aside class="profile-sidebar" aria-label="Profile summary">
             <div class="profile-card">
-                <img class="profile-avatar" src="{{ $user->avatar ? asset('storage/' . $user->avatar) : 'https://i1.sndcdn.com/avatars-tDQKBExQks6cE0zh-HO3N7Q-t240x240.jpg' }}" alt="{{ $user->full_name }}">
+                <img class="profile-avatar" src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('assets/images/external/profile-default-avatar.jpg') }}" alt="{{ $user->full_name }}">
                 <h1>{{ $user->full_name }}</h1>
                 <p>{{ '@' . strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}</p>
 

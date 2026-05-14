@@ -16,7 +16,7 @@
                 </a>
             </div>
             <figure class="about-hero-model">
-                <img src="https://sidekicks.co.uk/cdn/shop/files/1486671_00_png.png?v=1739380980" alt="Luxury fashion boutique interior">
+                <img src="{{ asset('assets/images/external/about-hero.png') }}" alt="Luxury fashion boutique interior">
             </figure>
         </section>
 
@@ -83,7 +83,7 @@
                 <article class="about-team-card">
                     <div class="about-team-card__top">
                         <span class="about-team-card__avatar">
-                            <img src="https://i1.sndcdn.com/avatars-tDQKBExQks6cE0zh-HO3N7Q-t240x240.jpg" alt="Vichhean Sombath">
+                            <img src="{{ asset('assets/images/external/about-team-avatar.jpg') }}" alt="Vichhean Sombath">
                         </span>
                         <span class="about-team-card__focus">Brand vision</span>
                     </div>
@@ -96,7 +96,7 @@
                 <article class="about-team-card">
                     <div class="about-team-card__top">
                         <span class="about-team-card__avatar">
-                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" alt="Creative Director">
+                            <img src="{{ asset('assets/images/external/about-creative-director.jpg') }}" alt="Creative Director">
                         </span>
                         <span class="about-team-card__focus">Product curation</span>
                     </div>
@@ -109,7 +109,7 @@
                 <article class="about-team-card">
                     <div class="about-team-card__top">
                         <span class="about-team-card__avatar">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" alt="Operations Lead">
+                            <img src="{{ asset('assets/images/external/about-operations-lead.jpg') }}" alt="Operations Lead">
                         </span>
                         <span class="about-team-card__focus">Order flow</span>
                     </div>

@@ -16,7 +16,7 @@
                 </a>
             </div>
             <figure class="help-hero-model">
-                <img src="https://parkaccess.com.ph/cdn/shop/files/AURORA_FD2596-602_PHSLH000-2000.png?v=1770200188" alt="Customer support illustration">
+                <img src="{{ asset('assets/images/external/help-hero.png') }}" alt="Customer support illustration">
             </figure>
         </section>
 

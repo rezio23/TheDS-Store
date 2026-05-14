@@ -183,11 +183,18 @@
                                     <form method="post" action="{{ route('admin.dashboard') }}?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">
                                         @csrf
                                         <input type="hidden" name="order_id" value="{{ $order->id }}">
-                                        <select name="status" style="min-width:90px;padding:4px 8px;font-size:0.58rem;">
-                                            @foreach (['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as $s)
-                                                <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="admin-select-control" data-admin-select>
+                                            <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="order-status-{{ $order->id }}">
+                                                <span data-admin-select-current>{{ ucfirst($order->status) }}</span>
+                                                <i data-lucide="chevron-down"></i>
+                                            </button>
+                                            <div class="admin-select-menu" id="order-status-{{ $order->id }}" role="listbox" data-admin-select-menu>
+                                                @foreach (['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as $s)
+                                                    <button type="button" role="option" data-admin-select-option data-value="{{ $s }}" class="{{ $order->status === $s ? 'is-selected' : '' }}" aria-selected="{{ $order->status === $s ? 'true' : 'false' }}">{{ ucfirst($s) }}</button>
+                                                @endforeach
+                                            </div>
+                                            <input type="hidden" name="status" value="{{ $order->status }}" data-admin-select-input>
+                                        </div>
                                         <button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>
                                     </form>
                                 </td>
@@ -204,15 +211,17 @@
 
             <div class="admin-section" style="margin-bottom: 24px;">
                 <div style="display:flex;gap:12px;">
-                    <button type="button" class="admin-btn" style="flex:1;" onclick="var f=document.getElementById('add-product-form'); f.style.display=f.style.display==='none'?'block':'none';">
-                        <i data-lucide="plus"></i> Add New Product
+                    <button type="button" class="admin-btn admin-toggle" style="flex:1;" data-admin-toggle aria-expanded="false" aria-controls="add-product-form">
+                        <i data-lucide="plus"></i> <span>Add New Product</span>
+                        <i data-lucide="chevron-down" class="admin-toggle__icon" aria-hidden="true"></i>
                     </button>
-                    <button type="button" class="admin-btn" style="flex:1;" onclick="var m=document.getElementById('category-manager'); m.style.display=m.style.display==='none'?'block':'none';">
-                        <i data-lucide="folder-open"></i> Manage Categories
+                    <button type="button" class="admin-btn admin-toggle" style="flex:1;" data-admin-toggle aria-expanded="false" aria-controls="category-manager">
+                        <i data-lucide="folder-open"></i> <span>Manage Categories</span>
+                        <i data-lucide="chevron-down" class="admin-toggle__icon" aria-hidden="true"></i>
                     </button>
                 </div>
 
-                <form id="add-product-form" method="post" action="{{ route('admin.dashboard') }}?tab=products" class="admin-form" style="display:none;margin-top:18px;">
+                <form id="add-product-form" method="post" action="{{ route('admin.dashboard') }}?tab=products" class="admin-form admin-panel-content" data-admin-content hidden>
                     @csrf
                     <div class="admin-form-grid">
                         <div class="admin-form-group">
@@ -228,13 +237,20 @@
                             <input type="number" id="prod-price" name="price" step="0.01" min="0.01" required>
                         </div>
                         <div class="admin-form-group">
-                            <label for="prod-category">Category</label>
-                            <select id="prod-category" name="category" class="admin-select" style="width:100%;">
-                                <option value="">— Select Category —</option>
-                                @foreach ($allCategories as $cat)
-                                    <option value="{{ $cat->slug }}">{{ $cat->name }}</option>
-                                @endforeach
-                            </select>
+                            <label>Category</label>
+                            <div class="admin-select-control" data-admin-select style="width:100%;border-radius:8px;">
+                                <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="prod-cat-menu" style="width:100%;">
+                                    <span data-admin-select-current>— Select Category —</span>
+                                    <i data-lucide="chevron-down"></i>
+                                </button>
+                                <div class="admin-select-menu" id="prod-cat-menu" role="listbox" data-admin-select-menu>
+                                    <button type="button" role="option" data-admin-select-option data-value="" class="is-selected" aria-selected="true">— Select Category —</button>
+                                    @foreach ($allCategories as $cat)
+                                        <button type="button" role="option" data-admin-select-option data-value="{{ $cat->slug }}" aria-selected="false">{{ $cat->name }}</button>
+                                    @endforeach
+                                </div>
+                                <input type="hidden" name="category" id="prod-category" value="">
+                            </div>
                         </div>
                         <div class="admin-form-group">
                             <label for="prod-badge">Badge</label>
@@ -301,7 +317,7 @@
                     })();
                 </script>
 
-                <div id="category-manager" style="display:none;margin-top:18px;">
+                <div id="category-manager" class="admin-panel-content" data-admin-content hidden>
                     <div class="admin-form" style="margin-bottom:18px;">
                         <h3 style="margin:0 0 14px;font-size:0.65rem;font-weight:400;">Add New Category</h3>
                         <form method="post" action="{{ route('admin.dashboard') }}?tab=products">
@@ -363,20 +379,45 @@
                     <input type="hidden" name="category" id="admin-category-input" value="{{ $selectedCategory }}">
                     <input type="hidden" name="sort" id="admin-sort-input" value="{{ $selectedSort }}">
 
-                    <select id="cat-select" style="padding:4px 8px;font-size:0.58rem;" onchange="document.getElementById('admin-category-input').value=this.value;document.getElementById('admin-filter-form').submit();">
-                        <option value="" {{ $selectedCategory === '' ? 'selected' : '' }}>All Categories</option>
-                        @foreach ($allCategories as $cat)
-                            <option value="{{ $cat->slug }}" {{ $selectedCategory === $cat->slug ? 'selected' : '' }}>{{ $cat->name }}</option>
-                        @endforeach
-                    </select>
+                    <div class="admin-select-control" data-admin-select data-admin-auto-submit>
+                        <span class="admin-select-control__label">Category</span>
+                        <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="admin-cat-menu">
+                            <span data-admin-select-current>{{ $currentCategoryLabel }}</span>
+                            <i data-lucide="chevron-down"></i>
+                        </button>
+                        <div class="admin-select-menu" id="admin-cat-menu" role="listbox" data-admin-select-menu>
+                            <button type="button" role="option" data-admin-select-option data-value="" class="{{ $selectedCategory === '' ? 'is-selected' : '' }}" aria-selected="{{ $selectedCategory === '' ? 'true' : 'false' }}">All Categories</button>
+                            @foreach ($allCategories as $cat)
+                                <button type="button" role="option" data-admin-select-option data-value="{{ $cat->slug }}" class="{{ $selectedCategory === $cat->slug ? 'is-selected' : '' }}" aria-selected="{{ $selectedCategory === $cat->slug ? 'true' : 'false' }}">{{ $cat->name }}</button>
+                            @endforeach
+                        </div>
+                    </div>
 
-                    <select id="sort-select" style="padding:4px 8px;font-size:0.58rem;" onchange="document.getElementById('admin-sort-input').value=this.value;document.getElementById('admin-filter-form').submit();">
-                        <option value="number_desc" {{ $selectedSort === 'number_desc' ? 'selected' : '' }}>Number</option>
-                        <option value="name_asc" {{ $selectedSort === 'name_asc' ? 'selected' : '' }}>Name (A-Z)</option>
-                        <option value="name_desc" {{ $selectedSort === 'name_desc' ? 'selected' : '' }}>Name (Z-A)</option>
-                        <option value="price_asc" {{ $selectedSort === 'price_asc' ? 'selected' : '' }}>Price (Low to High)</option>
-                        <option value="price_desc" {{ $selectedSort === 'price_desc' ? 'selected' : '' }}>Price (High to Low)</option>
-                    </select>
+                    <div class="admin-select-control" data-admin-select data-admin-auto-submit>
+                        <span class="admin-select-control__label">Sort</span>
+                        <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="admin-sort-menu">
+                            <span data-admin-select-current>
+                                @php
+                                    $sortLabels = [
+                                        'number_desc' => 'Number',
+                                        'name_asc' => 'Name (A-Z)',
+                                        'name_desc' => 'Name (Z-A)',
+                                        'price_asc' => 'Price (Low to High)',
+                                        'price_desc' => 'Price (High to Low)',
+                                    ];
+                                    echo $sortLabels[$selectedSort] ?? 'Number';
+                                @endphp
+                            </span>
+                            <i data-lucide="chevron-down"></i>
+                        </button>
+                        <div class="admin-select-menu" id="admin-sort-menu" role="listbox" data-admin-select-menu>
+                            <button type="button" role="option" data-admin-select-option data-value="number_desc" class="{{ $selectedSort === 'number_desc' ? 'is-selected' : '' }}" aria-selected="{{ $selectedSort === 'number_desc' ? 'true' : 'false' }}">Number</button>
+                            <button type="button" role="option" data-admin-select-option data-value="name_asc" class="{{ $selectedSort === 'name_asc' ? 'is-selected' : '' }}" aria-selected="{{ $selectedSort === 'name_asc' ? 'true' : 'false' }}">Name (A-Z)</button>
+                            <button type="button" role="option" data-admin-select-option data-value="name_desc" class="{{ $selectedSort === 'name_desc' ? 'is-selected' : '' }}" aria-selected="{{ $selectedSort === 'name_desc' ? 'true' : 'false' }}">Name (Z-A)</button>
+                            <button type="button" role="option" data-admin-select-option data-value="price_asc" class="{{ $selectedSort === 'price_asc' ? 'is-selected' : '' }}" aria-selected="{{ $selectedSort === 'price_asc' ? 'true' : 'false' }}">Price (Low to High)</button>
+                            <button type="button" role="option" data-admin-select-option data-value="price_desc" class="{{ $selectedSort === 'price_desc' ? 'is-selected' : '' }}" aria-selected="{{ $selectedSort === 'price_desc' ? 'true' : 'false' }}">Price (High to Low)</button>
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -401,7 +442,7 @@
                             <tr>
                                 <td>{{ $productIndex++ }}</td>
                                 <td>{{ $product->id }}</td>
-                                <td><img src="{{ $product->image }}" alt="" class="admin-product-thumb"></td>
+                                <td><img src="{{ asset('storage/' . $product->image) }}" alt="" class="admin-product-thumb"></td>
                                 <td>{{ $product->name }}</td>
                                 <td>{{ $product->brand }}</td>
                                 <td>${{ number_format($product->price, 2) }}</td>
@@ -631,6 +672,133 @@
     })();
 </script>
 @endif
+
+<script>
+(function() {
+    // Panel toggles (Add New Product / Manage Categories)
+    var panelToggles = document.querySelectorAll('[data-admin-toggle]');
+    panelToggles.forEach(function(btn) {
+        var contentId = btn.getAttribute('aria-controls');
+        var content = document.getElementById(contentId);
+        if (!content) return;
+
+        var isExpanded = btn.getAttribute('aria-expanded') === 'true';
+        content.hidden = !isExpanded;
+        if (isExpanded) {
+            content.classList.add('is-open');
+            content.style.maxHeight = 'none';
+        } else {
+            content.style.maxHeight = '0px';
+        }
+
+        btn.addEventListener('click', function() {
+            var shouldOpen = btn.getAttribute('aria-expanded') !== 'true';
+            btn.setAttribute('aria-expanded', String(shouldOpen));
+
+            if (shouldOpen) {
+                content.hidden = false;
+                content.style.maxHeight = '0px';
+                content.classList.add('is-open');
+                requestAnimationFrame(function() {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                });
+            } else {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                requestAnimationFrame(function() {
+                    content.classList.remove('is-open');
+                    content.style.maxHeight = '0px';
+                });
+            }
+        });
+
+        content.addEventListener('transitionend', function(e) {
+            if (e.propertyName !== 'max-height') return;
+            var open = btn.getAttribute('aria-expanded') === 'true';
+            if (open) {
+                content.style.maxHeight = 'none';
+            } else {
+                content.hidden = true;
+            }
+        });
+    });
+
+    // Custom select dropdowns (same UX as shop selects)
+    var selectControls = document.querySelectorAll('[data-admin-select]');
+    selectControls.forEach(function(control) {
+        var toggle = control.querySelector('[data-admin-select-toggle]');
+        var menu = control.querySelector('[data-admin-select-menu]');
+        var options = control.querySelectorAll('[data-admin-select-option]');
+        var current = control.querySelector('[data-admin-select-current]');
+        var input = control.querySelector('[data-admin-select-input]');
+        var autoSubmit = control.hasAttribute('data-admin-auto-submit');
+        if (!toggle || !menu || !options.length || !current) return;
+
+        function setOpen(isOpen) {
+            toggle.setAttribute('aria-expanded', String(isOpen));
+            control.classList.toggle('is-open', isOpen);
+        }
+
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+            // Close all other selects first
+            selectControls.forEach(function(other) {
+                if (other === control) return;
+                var otherToggle = other.querySelector('[data-admin-select-toggle]');
+                if (otherToggle && otherToggle.getAttribute('aria-expanded') === 'true') {
+                    other.classList.remove('is-open');
+                    otherToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+            setOpen(!isOpen);
+        });
+
+        options.forEach(function(opt) {
+            opt.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var val = opt.getAttribute('data-value');
+                var label = opt.textContent;
+
+                options.forEach(function(o) {
+                    o.classList.remove('is-selected');
+                    o.setAttribute('aria-selected', 'false');
+                });
+                opt.classList.add('is-selected');
+                opt.setAttribute('aria-selected', 'true');
+
+                current.textContent = label;
+                if (input) input.value = val;
+
+                // Update hidden form inputs for filter selects
+                var controlId = toggle.getAttribute('aria-controls');
+                if (controlId === 'admin-cat-menu') {
+                    var catInput = document.getElementById('admin-category-input');
+                    if (catInput) catInput.value = val;
+                } else if (controlId === 'admin-sort-menu') {
+                    var sortInput = document.getElementById('admin-sort-input');
+                    if (sortInput) sortInput.value = val;
+                } else if (controlId === 'prod-cat-menu') {
+                    var prodCatInput = document.getElementById('prod-category');
+                    if (prodCatInput) prodCatInput.value = val;
+                }
+
+                setOpen(false);
+
+                if (autoSubmit) {
+                    var form = control.closest('form');
+                    if (form) form.submit();
+                }
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!control.contains(e.target)) {
+                setOpen(false);
+            }
+        });
+    });
+})();
+</script>
 
 </body>
 </html>

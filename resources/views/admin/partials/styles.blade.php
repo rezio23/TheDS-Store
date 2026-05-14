@@ -347,6 +347,147 @@ button {
     border: 1px solid var(--line);
 }
 
+.admin-select-control {
+    position: relative;
+    min-height: 34px;
+    padding: 0 10px 0 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--accent);
+    font-family: var(--font-primary);
+    font-size: 0.58rem;
+    font-weight: 800;
+    transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    cursor: pointer;
+}
+
+.admin-select-control:hover {
+    border-color: var(--accent);
+    background: rgba(255, 250, 240, 0.94);
+}
+
+.admin-select-control.is-open {
+    border-color: var(--accent);
+    background: rgba(255, 250, 240, 0.94);
+    box-shadow: 0 8px 22px rgba(192, 107, 0, 0.12);
+}
+
+.admin-select-control__label {
+    color: rgba(0, 0, 0, 0.58);
+    font-size: 0.52rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.admin-select-toggle {
+    min-width: 90px;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.58rem;
+    font-weight: 800;
+    outline: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0;
+}
+
+.admin-select-toggle svg {
+    width: 13px;
+    height: 13px;
+    stroke-width: 2.6;
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.admin-select-control.is-open .admin-select-toggle svg {
+    transform: rotate(180deg);
+}
+
+.admin-select-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 30;
+    min-width: max(100%, 160px);
+    max-height: 0;
+    padding: 0 6px;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: rgba(255, 250, 240, 0.98);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.14);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-6px) scale(0.96);
+    transform-origin: top right;
+    will-change: transform, opacity, max-height;
+    transition:
+        max-height 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        padding 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 180ms ease,
+        transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-color 180ms ease,
+        visibility 0s linear 260ms;
+}
+
+.admin-select-control.is-open .admin-select-menu {
+    max-height: 260px;
+    padding-block: 5px;
+    border-color: var(--line);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    transition:
+        max-height 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        padding 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 220ms ease,
+        transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-color 180ms ease,
+        visibility 0s;
+}
+
+.admin-select-menu button {
+    width: 100%;
+    min-height: 30px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.55rem;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+    white-space: nowrap;
+}
+
+.admin-select-menu button:hover,
+.admin-select-menu button:focus-visible,
+.admin-select-menu button.is-selected {
+    background: rgba(192, 107, 0, 0.12);
+    color: var(--ink);
+}
+
+.admin-select-menu button:hover,
+.admin-select-menu button:focus-visible {
+    transform: translateX(2px);
+    outline: 0;
+}
+
 .admin-select {
     font: inherit;
     font-size: 0.58rem;
@@ -728,5 +869,66 @@ button {
     .admin-product-modal__meta {
         grid-template-columns: 1fr 1fr;
     }
+}
+
+/* Admin panel toggles (same UX as shop accordions) */
+.admin-toggle {
+    justify-content: center;
+    position: relative;
+    padding: 10px 18px;
+    padding-right: 38px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--accent);
+    font-family: var(--font-primary);
+    font-size: 0.58rem;
+    font-weight: 800;
+    transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.admin-toggle:hover {
+    border-color: var(--accent);
+    background: rgba(255, 250, 240, 0.94);
+    box-shadow: 0 8px 22px rgba(192, 107, 0, 0.12);
+}
+
+.admin-toggle[aria-expanded="true"] {
+    border-color: var(--accent);
+    background: rgba(255, 250, 240, 0.94);
+    box-shadow: 0 8px 22px rgba(192, 107, 0, 0.12);
+}
+
+.admin-toggle__icon {
+    position: absolute;
+    right: 14px;
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.6;
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.admin-toggle[aria-expanded="true"] .admin-toggle__icon {
+    transform: rotate(180deg);
+}
+
+.admin-panel-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-top: 0;
+    transition: max-height 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                opacity 220ms ease,
+                margin-top 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.admin-panel-content.is-open {
+    opacity: 1;
+    margin-top: 18px;
+    max-height: none;
+}
+
+.admin-panel-content[hidden] {
+    display: none;
 }
 </style>
