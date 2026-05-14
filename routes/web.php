@@ -50,4 +50,13 @@ Route::post('/help-center', [PageController::class, 'storeHelpRequest']);
 Route::post('/submit-request', [PageController::class, 'storeHelpRequest']);
 Route::post('/chat-api', ChatController::class);
 
+// Admin
+Route::get('/admin/login', [\App\Http\Controllers\Admin\AuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin/login', [\App\Http\Controllers\Admin\AuthController::class, 'login']);
+Route::post('/admin/logout', [\App\Http\Controllers\Admin\AuthController::class, 'logout'])->name('admin.logout');
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
+});
+
 require __DIR__.'/auth.php';
