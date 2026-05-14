@@ -195,9 +195,8 @@
             </button>
             <h2 id="edit-profile-title">Edit Personal Detail</h2>
             <hr class="edit-form-divider">
-            <form class="edit-form" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
+            <form class="edit-form" method="POST" action="{{ route('profile') }}" enctype="multipart/form-data">
                 @csrf
-                @method('PATCH')
                 @if ($errors->any())
                     <div class="auth-errors" style="color: #e63946; margin-bottom: 1rem; font-size: 0.9rem;">
                         @foreach ($errors->all() as $error)
@@ -226,7 +225,7 @@
                     <label class="edit-form-label" for="edit-profile-pic">Profile Picture</label>
                     <div class="edit-form-file-wrap">
                         <span class="edit-form-file-text" id="edit-file-text">Browser File</span>
-                        <input id="edit-profile-pic" name="avatar" type="file" accept="image/*" aria-label="Profile picture">
+                        <input id="edit-profile-pic" name="profile_picture" type="file" accept="image/*" aria-label="Profile picture">
                     </div>
                 </div>
                 <div class="edit-form-group">

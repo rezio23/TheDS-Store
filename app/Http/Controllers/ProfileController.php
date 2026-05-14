@@ -31,10 +31,14 @@ class ProfileController extends Controller
     {
         $data = $request->validated();
 
-        if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('uploads/avatars', 'public');
+        if ($request->hasFile('profile_picture')) {
+            $file = $request->file('profile_picture');
+            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
+            $path = $file->storeAs('uploads', $filename, 'public');
             $data['avatar'] = $path;
         }
+
+        unset($data['profile_picture']);
 
         $request->user()->fill($data);
 

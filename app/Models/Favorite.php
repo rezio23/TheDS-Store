@@ -11,6 +11,8 @@ class Favorite extends Model
 
     protected $table = 'favorites';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'product_id',

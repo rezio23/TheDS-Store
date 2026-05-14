@@ -127,6 +127,7 @@
                     </div>
                     <form class="help-chat__input" data-help-chat-form>
                         @csrf
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input
                             type="text"
                             data-help-chat-input
@@ -148,65 +149,76 @@
                 <h2 id="help-cta-heading">Still need help?</h2>
                 <p>Our human support team is ready to assist you with anything the AI could not resolve.</p>
                 <div class="help-cta-actions">
-                    <button type="button" class="help-cta-btn help-cta-btn--primary" id="help-request-open">
-                        <i data-lucide="file-text"></i> Send Request
-                    </button>
                     <a href="mailto:thedaservice@store.com" class="help-cta-btn help-cta-btn--primary">
                         <i data-lucide="mail"></i> Email Support
                     </a>
                     <a href="tel:+855112233" class="help-cta-btn">
                         <i data-lucide="phone"></i> Call Us
                     </a>
+                    <button type="button" class="help-cta-btn" data-help-request-btn>
+                        <i data-lucide="file-text"></i> Personal Request
+                    </button>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Request Modal -->
-    <div class="admin-product-overlay" id="help-request-overlay" aria-hidden="true">
-        <div class="admin-product-modal" role="dialog" aria-modal="true" aria-labelledby="help-request-modal-title">
-            <button type="button" class="admin-product-modal__close" id="help-request-modal-close" aria-label="Close">
+    <!-- Personal Request Modal -->
+    <div class="help-request-overlay" id="help-request-overlay" aria-hidden="true">
+        <div class="help-request-modal" role="dialog" aria-modal="true" aria-labelledby="help-request-title">
+            <button type="button" class="help-request-modal__close" id="help-request-close" aria-label="Close">
                 <i data-lucide="x"></i>
             </button>
-            <div class="admin-product-modal__content">
-                <div style="text-align:center;margin-bottom:22px;">
-                    <h2 id="help-request-modal-title" style="margin:0 0 6px;">Send a Personal Request</h2>
-                    <p class="pixel-note" style="margin:0;">Describe what you need and we will review it as soon as possible.</p>
+            <h2 id="help-request-title">Personal Request</h2>
+            <p class="help-request-modal__sub">Describe your issue and attach a file if needed. We will reply via email.</p>
+
+            @if ($requestSuccess)
+                <div class="help-request-alert help-request-alert--success">
+                    <i data-lucide="check-circle"></i>
+                    <span>Your request has been submitted successfully.</span>
                 </div>
-                <form class="help-request-form" id="help-request-form" action="{{ url('/submit-request') }}" method="post" enctype="multipart/form-data">
-                    @csrf
-                    <div class="help-request-form__group">
-                        <label class="help-request-form__label" for="request-email">Email</label>
-                        <input class="help-request-form__input" id="request-email" name="email" type="email" value="{{ Auth::user()?->email ?? '' }}" placeholder="you@example.com" required>
+            @elseif ($requestError !== '')
+                <div class="help-request-alert help-request-alert--error">
+                    <i data-lucide="alert-circle"></i>
+                    <span>{{ $requestError }}</span>
+                </div>
+            @endif
+
+            <form method="post" action="{{ route('help-center') }}" enctype="multipart/form-data" class="help-request-form">
+                @csrf
+                <input type="hidden" name="personal_request" value="1">
+                @php
+                    $prefillEmail = old('request_email', Auth::user()?->email ?? '');
+                @endphp
+                <div class="help-request-group">
+                    <label for="request-email">Email</label>
+                    <input type="email" id="request-email" name="request_email" placeholder="you@example.com" required
+                        value="{{ $prefillEmail }}">
+                </div>
+                <div class="help-request-group">
+                    <label for="request-phone">Phone Number</label>
+                    <input type="tel" id="request-phone" name="request_phone" placeholder="+855 112 233" required
+                        value="{{ old('request_phone', '') }}">
+                </div>
+                <div class="help-request-group">
+                    <label for="request-text">Your Request</label>
+                    <textarea id="request-text" name="request_text" rows="5" placeholder="Describe what you need help with..." required>{{ old('request_text', '') }}</textarea>
+                </div>
+                <div class="help-request-group">
+                    <label for="request-file">Attachment (optional)</label>
+                    <div class="help-request-file">
+                        <input type="file" id="request-file" name="request_file" accept="image/*,.pdf,.txt" class="help-request-file__input" onchange="var n=this.files[0]?this.files[0].name:'No file chosen'; document.getElementById('request-file-name').textContent=n; document.getElementById('request-file-name').classList.toggle('is-empty', !this.files.length);">
+                        <label for="request-file" class="help-request-file__btn">
+                            <i data-lucide="upload-cloud"></i> Choose File
+                        </label>
+                        <span id="request-file-name" class="help-request-file__name is-empty">No file chosen</span>
                     </div>
-                    <div class="help-request-form__group">
-                        <label class="help-request-form__label" for="request-phone">Phone</label>
-                        <input class="help-request-form__input" id="request-phone" name="phone" type="tel" value="" placeholder="+855 112 233" required>
-                    </div>
-                    <div class="help-request-form__group">
-                        <label class="help-request-form__label" for="request-subject">Subject</label>
-                        <input class="help-request-form__input" id="request-subject" name="subject" type="text" maxlength="120" placeholder="What is this about?" required>
-                    </div>
-                    <div class="help-request-form__group">
-                        <label class="help-request-form__label" for="request-message">Message</label>
-                        <textarea class="help-request-form__textarea" id="request-message" name="message" rows="4" maxlength="2000" placeholder="Tell us the details..." required></textarea>
-                    </div>
-                    <div class="help-request-form__group">
-                        <label class="help-request-form__label" for="request-file">Attachment (optional)</label>
-                        <div class="help-request-form__file">
-                            <span class="help-request-form__file-icon"><i data-lucide="upload-cloud"></i></span>
-                            <span class="help-request-form__file-text" id="request-file-text">Click to choose a file</span>
-                            <span class="help-request-form__file-meta">Images & PDF only</span>
-                            <input id="request-file" name="attachment" type="file" accept="image/*,application/pdf" aria-label="Attachment">
-                        </div>
-                    </div>
-                    <div class="help-request-form__actions">
-                        <button type="submit" class="help-request-form__submit">Submit Request</button>
-                    </div>
-                    <p class="help-request__success" id="request-success" hidden><i data-lucide="check-circle-2"></i> Your request has been sent successfully.</p>
-                    <p class="help-request__error" id="request-error" hidden></p>
-                </form>
-            </div>
+                    <span class="help-request-hint">Max 5MB. Images, PDF, or text files accepted.</span>
+                </div>
+                <button type="submit" class="help-request-submit">
+                    <i data-lucide="send"></i> Submit Request
+                </button>
+            </form>
         </div>
     </div>
 @endsection
@@ -218,7 +230,7 @@
     var $input = $('[data-help-chat-input]');
     var $messages = $('[data-help-chat-messages]');
     var $window = $('[data-help-chat-window]');
-    var csrfToken = $form.find('input[name="_token"]').val();
+    var csrfToken = $form.find('input[name="csrf_token"]').val();
 
     var scrollToBottom = function () {
         if ($window.length) {
@@ -278,7 +290,7 @@
         $.ajax({
             url: '{{ url('/chat-api') }}',
             type: 'POST',
-            data: { message: message, _token: csrfToken },
+            data: { message: message, csrf_token: csrfToken },
             dataType: 'json',
         }).done(function (response) {
             setLoading(false);
@@ -318,65 +330,14 @@
         $faqEmpty.prop('hidden', visibleCount > 0);
     });
 
-    // Personal Request form
-    var $requestForm = $('#help-request-form');
-    var $requestSuccess = $('#request-success');
-    var $requestError = $('#request-error');
-    var $requestFileInput = $('#request-file');
-    var $requestFileText = $('#request-file-text');
-
-    if ($requestFileInput.length && $requestFileText.length) {
-        $requestFileInput.on('change', function () {
-            $requestFileText.text(this.files[0]?.name || 'Click to choose a file');
-        });
-    }
-
-    $requestForm.on('submit', function (event) {
-        event.preventDefault();
-        $requestSuccess.prop('hidden', true);
-        $requestError.prop('hidden', true);
-
-        var formData = new FormData(this);
-        var $submitBtn = $requestForm.find('.help-request-form__submit');
-        $submitBtn.prop('disabled', true).text('Sending...');
-
-        $.ajax({
-            url: '{{ url('/submit-request') }}',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-        }).done(function (response) {
-            $submitBtn.prop('disabled', false).text('Submit Request');
-            if (response.success) {
-                $requestForm[0].reset();
-                $requestFileText.text('Click to choose a file');
-                $requestSuccess.prop('hidden', false);
-                if (window.lucide) {
-                    window.lucide.createIcons();
-                }
-            } else {
-                $requestError.text(response.error || 'Something went wrong. Please try again.').prop('hidden', false);
-            }
-        }).fail(function (xhr) {
-            $submitBtn.prop('disabled', false).text('Submit Request');
-            var errorText = 'Something went wrong. Please try again later.';
-            try {
-                var resp = JSON.parse(xhr.responseText);
-                if (resp.error) errorText = resp.error;
-            } catch (e) {}
-            $requestError.text(errorText).prop('hidden', false);
-        });
-    });
-
-    // Request modal
+    // Personal request modal
     var $requestOverlay = $('#help-request-overlay');
-    var $requestOpenBtn = $('#help-request-open');
-    var $requestCloseBtn = $('#help-request-modal-close');
+    var $requestBtn = $('[data-help-request-btn]');
+    var $requestClose = $('#help-request-close');
 
     function openRequestModal() {
-        $requestOverlay.addClass('is-open').attr('aria-hidden', 'false');
+        $requestOverlay.addClass('is-open');
+        $requestOverlay.attr('aria-hidden', 'false');
         $('body').css('overflow', 'hidden');
         if (window.lucide) {
             window.lucide.createIcons();
@@ -384,15 +345,16 @@
     }
 
     function closeRequestModal() {
-        $requestOverlay.removeClass('is-open').attr('aria-hidden', 'true');
+        $requestOverlay.removeClass('is-open');
+        $requestOverlay.attr('aria-hidden', 'true');
         $('body').css('overflow', '');
     }
 
-    $requestOpenBtn.on('click', openRequestModal);
-    $requestCloseBtn.on('click', closeRequestModal);
+    $requestBtn.on('click', openRequestModal);
+    $requestClose.on('click', closeRequestModal);
 
     $requestOverlay.on('click', function (e) {
-        if (e.target === this) {
+        if (e.target === $requestOverlay[0]) {
             closeRequestModal();
         }
     });
@@ -402,6 +364,10 @@
             closeRequestModal();
         }
     });
+
+    @if ($requestSuccess || $requestError !== '')
+        openRequestModal();
+    @endif
 })();
 </script>
 @endpush

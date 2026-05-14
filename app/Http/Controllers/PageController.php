@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PageController extends Controller
 {
@@ -63,8 +64,66 @@ class PageController extends Controller
         return view('terms', compact('termsSections'));
     }
 
-    public function helpCenter()
+    public function helpCenter(Request $request)
     {
+        $requestSuccess = false;
+        $requestError = '';
+
+        if ($request->isMethod('post') && $request->has('personal_request')) {
+            $requestText = trim($request->input('request_text', ''));
+            $requestEmail = trim($request->input('request_email', ''));
+            $requestPhone = trim($request->input('request_phone', ''));
+
+            if ($requestText === '') {
+                $requestError = 'Please describe your request.';
+            } elseif ($requestEmail === '' || !filter_var($requestEmail, FILTER_VALIDATE_EMAIL)) {
+                $requestError = 'Please enter a valid email address.';
+            } elseif ($requestPhone === '') {
+                $requestError = 'Please enter your phone number.';
+            } else {
+                $uploadDir = storage_path('app/public/uploads/support');
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                $uploadedFile = '';
+                if ($request->hasFile('request_file') && $request->file('request_file')->isValid()) {
+                    $file = $request->file('request_file');
+                    $mimeType = $file->getMimeType();
+                    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'text/plain'];
+
+                    if (in_array($mimeType, $allowedTypes, true)) {
+                        $originalName = $file->getClientOriginalName();
+                        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalName);
+                        $safeName = time() . '_' . $safeName;
+                        $file->move($uploadDir, $safeName);
+                        $uploadedFile = $safeName;
+                    } else {
+                        $requestError = 'Invalid file type or upload failed.';
+                    }
+                }
+
+                if ($requestError === '') {
+                    $logFile = $uploadDir . '/requests.json';
+                    $requests = [];
+                    if (file_exists($logFile)) {
+                        $requests = json_decode(file_get_contents($logFile), true) ?: [];
+                    }
+                    $requests[] = [
+                        'id' => uniqid('req_', true),
+                        'email' => $requestEmail,
+                        'phone' => $requestPhone,
+                        'text' => $requestText,
+                        'file' => $uploadedFile,
+                        'status' => 'pending',
+                        'created_at' => now()->format('Y-m-d H:i:s'),
+                    ];
+                    file_put_contents($logFile, json_encode($requests, JSON_PRETTY_PRINT));
+                    $requestSuccess = true;
+                }
+            }
+        }
+
         $helpFaqs = [
             [
                 'question' => 'How do I place an order?',
@@ -94,23 +153,11 @@ class PageController extends Controller
 
         $helpTickerBrands = ['POLO', 'BALENCIAGA', 'ADIDAS', 'NIKE', 'PUMA', 'GUCCI', 'PRADA', 'CHANEL'];
 
-        return view('help-center', compact('helpFaqs', 'helpTickerBrands'));
+        return view('help-center', compact('helpFaqs', 'helpTickerBrands', 'requestSuccess', 'requestError'));
     }
 
     public function storeHelpRequest(Request $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:50',
-            'subject' => 'required|string|max:120',
-            'message' => 'required|string|max:2000',
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf|max:2048',
-        ]);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true]);
-        }
-
-        return redirect()->route('help-center')->with('success', 'Your request has been submitted. We will contact you soon.');
+        return $this->helpCenter($request);
     }
 }

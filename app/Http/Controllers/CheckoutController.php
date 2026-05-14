@@ -4,9 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
-use chillerlan\QRCode\QRCode;
-use chillerlan\QRCode\QROptions;
-use chillerlan\QRCode\Output\QROutputInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -76,14 +73,8 @@ class CheckoutController extends Controller
         $taxes = round($subtotal * 0.018, 2);
         $total = $subtotal + $shippingPrice + $taxes;
 
-        $qrOptions = new QROptions([
-            'outputType' => QROutputInterface::GDIMAGE_PNG,
-            'outputBase64' => true,
-            'scale' => 6,
-        ]);
-
-        $qrText = 'the DS Payment - $' . number_format($total, 2) . ' USD';
-        $qrUrl = (new QRCode($qrOptions))->render($qrText);
+        $qrData = 'KHQR|theDS|' . number_format($total, 2) . '|USD';
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . urlencode($qrData);
 
         return view('payment', compact('cart', 'shipping', 'subtotal', 'shippingPrice', 'taxes', 'total', 'qrUrl'));
     }
@@ -95,6 +86,27 @@ class CheckoutController extends Controller
 
         if (empty($cart) || empty($shipping)) {
             return redirect()->route('cart')->with('error', 'Invalid checkout state.');
+        }
+
+        $errors = [];
+
+        $cardNumber = trim((string) $request->input('card_number', ''));
+        $cardExpiry = trim((string) $request->input('card_expiry', ''));
+        $cardCvc = trim((string) $request->input('card_cvc', ''));
+        $cardName = trim((string) $request->input('card_name', ''));
+
+        $hasCardFields = $cardNumber !== '' || $cardExpiry !== '' || $cardCvc !== '' || $cardName !== '';
+        $paymentMethod = $hasCardFields ? 'debit_card' : 'khqr';
+
+        if ($paymentMethod === 'debit_card') {
+            if ($cardNumber === '') $errors[] = 'Card number is required.';
+            if ($cardExpiry === '') $errors[] = 'Expiry date is required.';
+            if ($cardCvc === '') $errors[] = 'CVC is required.';
+            if ($cardName === '') $errors[] = 'Cardholder name is required.';
+        }
+
+        if (!empty($errors)) {
+            return redirect()->route('payment')->withErrors($errors);
         }
 
         $subtotal = array_sum(array_map(function ($item) {
@@ -133,7 +145,7 @@ class CheckoutController extends Controller
                 'product_brand' => $item['brand'],
                 'product_price' => $item['price'],
                 'quantity' => $item['quantity'],
-                'size' => $item['size'],
+                'size' => $item['size'] ?? 'One Size',
                 'product_image' => $item['image'] ?? null,
             ]);
         }
