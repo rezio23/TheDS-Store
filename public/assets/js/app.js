@@ -1178,4 +1178,167 @@ $(function () {
 
         updatePageHeroMotion();
     }
+
+    const $headerNotifications = $('[data-header-notifications]');
+    const $notificationTrigger = $('[data-notification-trigger]');
+    const $notificationPanel = $('#header-notification-panel');
+    const $notificationList = $('[data-notification-list]');
+    const $notificationCount = $('[data-notification-count]');
+    const $markAllRead = $('[data-mark-all-read]');
+
+    let notificationsData = [];
+
+    const formatTimeAgo = function (dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        if (seconds < 60) return 'Just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + 'm ago';
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + 'h ago';
+        const days = Math.floor(hours / 24);
+        if (days < 7) return days + 'd ago';
+        return date.toLocaleDateString();
+    };
+
+    const renderNotifications = function () {
+        if (!$notificationList.length) return;
+
+        if (!notificationsData.length) {
+            $notificationList.html('<div class="header-notification-empty">No notifications yet</div>');
+            return;
+        }
+
+        $notificationList.empty();
+        notificationsData.forEach(function (n) {
+            const isUnread = !n.read_at;
+            const $item = $('<button></button>');
+            $item.addClass('header-notification-item ' + (isUnread ? 'is-unread' : 'is-read'));
+            $item.attr('type', 'button');
+            $item.attr('data-notification-id', n.id);
+            if (n.link) {
+                $item.attr('data-notification-link', n.link);
+            }
+
+            $item.html(
+                '<span class="header-notification-dot"></span>' +
+                '<span class="header-notification-body">' +
+                '<span class="header-notification-title">' + $('<div>').text(n.title).html() + '</span>' +
+                (n.message ? '<span class="header-notification-message">' + $('<div>').text(n.message).html() + '</span>' : '') +
+                '</span>' +
+                '<span class="header-notification-time">' + formatTimeAgo(n.created_at) + '</span>'
+            );
+
+            $notificationList.append($item);
+        });
+    };
+
+    const updateNotificationCount = function (count) {
+        if (!$notificationCount.length) return;
+        $notificationCount.text(count || 0);
+        $notificationCount.prop('hidden', !count);
+    };
+
+    const fetchNotifications = function () {
+        if (!$notificationList.length) return;
+        fetch('/notifications', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                notificationsData = data.notifications || [];
+                renderNotifications();
+                updateNotificationCount(data.unread_count);
+            })
+            .catch(function () {});
+    };
+
+    const isNotificationPanelOpen = function () {
+        return $notificationPanel.hasClass('is-open');
+    };
+
+    const setNotificationPanelOpen = function (shouldOpen) {
+        if (!$notificationPanel.length || !$notificationTrigger.length) return;
+        $notificationPanel.toggleClass('is-open', shouldOpen);
+        $notificationTrigger.attr('aria-expanded', String(shouldOpen));
+        if (shouldOpen) {
+            fetchNotifications();
+        }
+    };
+
+    $notificationTrigger.on('click', function () {
+        setNotificationPanelOpen(!isNotificationPanelOpen());
+    });
+
+    $markAllRead.on('click', function () {
+        fetch('/notifications/read-all', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    notificationsData.forEach(function (n) { n.read_at = new Date().toISOString(); });
+                    renderNotifications();
+                    updateNotificationCount(0);
+                }
+            })
+            .catch(function () {});
+    });
+
+    $notificationList.on('click', function (event) {
+        const $item = $(event.target).closest('[data-notification-id]');
+        if (!$item.length) return;
+
+        const id = $item.attr('data-notification-id');
+        const link = $item.attr('data-notification-link');
+        const notification = notificationsData.find(function (n) { return String(n.id) === id; });
+
+        if (notification && !notification.read_at) {
+            fetch('/notifications/' + id + '/read', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        notification.read_at = new Date().toISOString();
+                        renderNotifications();
+                        updateNotificationCount(data.unread_count);
+                    }
+                })
+                .catch(function () {});
+        }
+
+        if (link) {
+            window.location.href = link;
+        }
+    });
+
+    $(document).on('click', function (event) {
+        const $clicked = $(event.target).closest('[data-header-notifications]');
+        if (!$clicked.length && $notificationPanel.length && isNotificationPanelOpen()) {
+            setNotificationPanelOpen(false);
+        }
+    });
+
+    $(document).on('keydown', function (event) {
+        if (event.key === 'Escape' && $notificationPanel.length && isNotificationPanelOpen()) {
+            setNotificationPanelOpen(false);
+        }
+    });
+
+    if ($notificationCount.length) {
+        fetchNotifications();
+    }
 });

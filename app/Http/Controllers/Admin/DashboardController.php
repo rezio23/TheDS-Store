@@ -76,10 +76,10 @@ class DashboardController extends Controller
             ->get();
 
         // Recent orders
-        $recentOrders = Order::with('user')->orderBy('created_at', 'desc')->limit(10)->get();
+        $recentOrders = Order::with('user')->orderBy('created_at', 'desc')->limit(5)->get();
 
         // Recent users
-        $recentUsers = User::orderBy('created_at', 'desc')->limit(10)->get();
+        $recentUsers = User::orderBy('created_at', 'desc')->limit(5)->get();
 
         // All categories
         $allCategories = Category::orderBy('name')->get();
@@ -287,7 +287,7 @@ class DashboardController extends Controller
 
         $recentOrders = Order::with('user')
             ->orderBy('created_at', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get()
             ->map(function ($order) {
                 return [

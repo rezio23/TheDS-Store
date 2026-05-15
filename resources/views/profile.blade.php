@@ -185,6 +185,41 @@
                     </div>
                 </div>
             </section>
+
+            <section class="profile-products-section" data-profile-section aria-labelledby="profile-notifications-title" id="notifications">
+                <div class="profile-section-heading">
+                    <button
+                        class="profile-panel-toggle"
+                        id="profile-notifications-title"
+                        type="button"
+                        data-product-toggle
+                        aria-expanded="true"
+                        aria-controls="profile-notifications-panel"
+                    >
+                        <span>Notifications</span>
+                        <i data-lucide="chevron-down" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div class="profile-notification-viewport product-panel-content profile-panel-content" id="profile-notifications-panel" data-profile-carousel-panel>
+                    <div class="profile-notification-list">
+                        @forelse ($notifications as $notification)
+                            <div class="profile-notification-item {{ $notification->read_at ? 'is-read' : 'is-unread' }}">
+                                <span class="header-notification-dot"></span>
+                                <div class="profile-notification-body">
+                                    <strong>{{ $notification->title }}</strong>
+                                    @if ($notification->message)
+                                        <p>{{ $notification->message }}</p>
+                                    @endif
+                                    <span class="profile-notification-time">{{ $notification->created_at->diffForHumans() }}</span>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="profile-notification-empty">No notifications yet</div>
+                        @endforelse
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 

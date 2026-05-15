@@ -73,6 +73,7 @@ button {
 
 .admin-brand a {
     color: #fff;
+    font-size: 2.6rem;
 }
 
 .admin-badge {

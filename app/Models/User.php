@@ -65,6 +65,16 @@ class User extends Authenticatable
         return $this->belongsToMany(Product::class, 'favorites');
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
+
     public function getAuthPassword(): string
     {
         return $this->password ?? $this->password_hash ?? '';

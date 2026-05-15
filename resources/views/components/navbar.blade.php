@@ -43,6 +43,7 @@ $searchId = match ($headerId) {
     </nav>
 
     <div class="header-actions" aria-label="Store actions">
+        @if(request()->is('/') || request()->routeIs('shop'))
         <div class="header-search" data-header-search>
             <div class="header-search-field">
                 <input class="header-search-input" id="{{ $searchId }}" data-product-search type="search" placeholder="Search products..." aria-label="Search products" autocomplete="off" tabindex="-1" aria-hidden="true">
@@ -52,6 +53,25 @@ $searchId = match ($headerId) {
                 <i data-lucide="search"></i>
             </button>
         </div>
+        @endif
+        @auth
+            @if(!request()->is('/') && !request()->routeIs('shop'))
+            <div class="header-notifications" data-header-notifications>
+                <button class="icon-button notification-trigger {{ request()->routeIs('profile') ? 'is-active' : '' }}" type="button" aria-label="Notifications" aria-controls="header-notification-panel" aria-expanded="false" title="Notifications" data-notification-trigger>
+                    <i data-lucide="bell"></i>
+                    <span class="notification-count" aria-live="polite" data-notification-count hidden>0</span>
+                </button>
+                <div class="header-notification-panel" id="header-notification-panel">
+                    <div class="header-notification-header">
+                        <strong>Notifications</strong>
+                        <button type="button" class="header-notification-mark-all" data-mark-all-read>Mark all as read</button>
+                    </div>
+                    <div class="header-notification-list" data-notification-list></div>
+                    <a href="{{ route('profile') }}#notifications" class="header-notification-footer">View all</a>
+                </div>
+            </div>
+            @endif
+        @endauth
         <a class="icon-button bag-button {{ request()->routeIs('cart') ? 'is-active' : '' }}" href="{{ route('cart') }}" aria-label="Shopping bag" title="Bag">
             <i data-lucide="shopping-bag"></i>
             <span class="bag-count" aria-live="polite">{{ $cartCount }}</span>

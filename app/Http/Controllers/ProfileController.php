@@ -16,8 +16,9 @@ class ProfileController extends Controller
         $user = Auth::user();
         $orders = $user->orders()->with('items')->orderBy('created_at', 'desc')->get();
         $favorites = $user->favoriteProducts()->get();
+        $notifications = $user->notifications()->limit(20)->get();
 
-        return view('profile', compact('user', 'orders', 'favorites'));
+        return view('profile', compact('user', 'orders', 'favorites', 'notifications'));
     }
 
     public function edit(Request $request): View
