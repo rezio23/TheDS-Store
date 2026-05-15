@@ -1287,4 +1287,87 @@ button {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* ===== Print styles for Reports ===== */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 12mm;
+    }
+
+    .admin-sidebar,
+    .admin-sidebar-footer,
+    .admin-nav,
+    .admin-logout,
+    .admin-select-control,
+    button[onclick="window.print();"] {
+        display: none !important;
+    }
+
+    .admin-main {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .admin-layout {
+        display: block !important;
+    }
+
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 10pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .admin-section,
+    .admin-stat-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border-color: #ddd !important;
+        background: #fff !important;
+    }
+
+    .admin-stats {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .admin-sections {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 16px !important;
+    }
+
+    .admin-chart-wrap {
+        height: 240px !important;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        font-size: 9pt !important;
+        padding: 6px 8px !important;
+    }
+
+    .admin-header h1 {
+        font-size: 16pt !important;
+    }
+
+    .admin-print-subtitle {
+        font-size: 10pt !important;
+    }
+
+    .admin-stat-value {
+        font-size: 12pt !important;
+    }
+
+    .admin-stat-label {
+        font-size: 8pt !important;
+    }
+
+    .admin-product-overlay,
+    .admin-request-overlay {
+        display: none !important;
+    }
+}
 </style>

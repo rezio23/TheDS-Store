@@ -1153,8 +1153,41 @@
                 </div>
             </div>
         @elseif ($activeTab === 'reports')
-            <div class="admin-header">
-                <h1>Reports</h1>
+            <div class="admin-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div>
+                    <h1>Reports</h1>
+                    <span class="admin-print-subtitle" style="color:var(--muted);font-size:0.6rem;">
+                        {{ $reportRangeLabel }}
+                        @if ($reportStartDate)
+                            ({{ $reportStartDate->format('M d, Y') }} - {{ $reportEndDate->format('M d, Y') }})
+                        @endif
+                    </span>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <form method="get" action="{{ route('admin.dashboard') }}" style="display:flex;gap:8px;align-items:center;">
+                        <input type="hidden" name="tab" value="reports">
+                        <div class="admin-select-control" data-admin-select data-admin-auto-submit>
+                            <span class="admin-select-control__label">Range</span>
+                            <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="report-range-menu">
+                                <span data-admin-select-current>{{ $reportRangeLabel }}</span>
+                                <i data-lucide="chevron-down"></i>
+                            </button>
+                            <div class="admin-select-menu" id="report-range-menu" role="listbox" data-admin-select-menu>
+                                <button type="button" role="option" data-admin-select-option data-value="today" class="{{ $reportRange === 'today' ? 'is-selected' : '' }}" aria-selected="{{ $reportRange === 'today' ? 'true' : 'false' }}">Today</button>
+                                <button type="button" role="option" data-admin-select-option data-value="7d" class="{{ $reportRange === '7d' ? 'is-selected' : '' }}" aria-selected="{{ $reportRange === '7d' ? 'true' : 'false' }}">Last 7 Days</button>
+                                <button type="button" role="option" data-admin-select-option data-value="30d" class="{{ $reportRange === '30d' ? 'is-selected' : '' }}" aria-selected="{{ $reportRange === '30d' ? 'true' : 'false' }}">Last 30 Days</button>
+                                <button type="button" role="option" data-admin-select-option data-value="this_month" class="{{ $reportRange === 'this_month' ? 'is-selected' : '' }}" aria-selected="{{ $reportRange === 'this_month' ? 'true' : 'false' }}">This Month</button>
+                                <button type="button" role="option" data-admin-select-option data-value="last_month" class="{{ $reportRange === 'last_month' ? 'is-selected' : '' }}" aria-selected="{{ $reportRange === 'last_month' ? 'true' : 'false' }}">Last Month</button>
+                                <button type="button" role="option" data-admin-select-option data-value="this_year" class="{{ $reportRange === 'this_year' ? 'is-selected' : '' }}" aria-selected="{{ $reportRange === 'this_year' ? 'true' : 'false' }}">This Year</button>
+                                <button type="button" role="option" data-admin-select-option data-value="all" class="{{ $reportRange === 'all' ? 'is-selected' : '' }}" aria-selected="{{ $reportRange === 'all' ? 'true' : 'false' }}">All Time</button>
+                            </div>
+                            <input type="hidden" name="range" value="{{ $reportRange }}" data-admin-select-input id="report-range-input">
+                        </div>
+                    </form>
+                    <button type="button" class="admin-btn admin-btn--small" onclick="window.print();">
+                        <i data-lucide="printer"></i> Print PDF
+                    </button>
+                </div>
             </div>
 
             <div class="admin-stats">
@@ -1190,7 +1223,7 @@
 
             <div class="admin-sections">
                 <div class="admin-section admin-chart-section">
-                    <h2>Revenue (Last 30 Days)</h2>
+                    <h2>Revenue ({{ $reportRangeLabel }})</h2>
                     <div class="admin-chart-wrap">
                         @if ($dailyRevenue->isEmpty())
                             <div class="admin-chart-empty">No revenue data yet.</div>
@@ -1246,7 +1279,7 @@
                 </div>
 
                 <div class="admin-section">
-                    <h2>New Users (Last 30 Days)</h2>
+                    <h2>New Users ({{ $reportRangeLabel }})</h2>
                     <div class="admin-chart-wrap">
                         @if ($userGrowth->isEmpty())
                             <div class="admin-chart-empty">No new users yet.</div>

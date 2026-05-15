@@ -67,11 +67,13 @@
                 if (contentType.indexOf('application/json') !== -1) {
                     return response.json().then(function(data) {
                         var messages = [];
-                        if (data.message) messages.push(data.message);
                         if (data.errors) {
                             for (var key in data.errors) {
                                 messages.push(data.errors[key].join('\n'));
                             }
+                        }
+                        if (!messages.length && data.message) {
+                            messages.push(data.message);
                         }
                         if (messages.length) {
                             errorBox.innerHTML = messages.join('<br>');

@@ -111,38 +111,87 @@ class DashboardController extends Controller
         $allRequests = UserRequest::with('user')->orderBy('created_at', 'desc')->get();
 
         // Reports data
-        $reportTotalRevenue = Order::where('status', '!=', 'cancelled')->sum('total') ?? 0;
-        $reportTotalOrders = Order::count();
-        $reportAvgOrderValue = $reportTotalOrders > 0 ? $reportTotalRevenue / $reportTotalOrders : 0;
-        $reportTotalDiscounts = Order::where('status', '!=', 'cancelled')->sum('discount') ?? 0;
+        $reportRange = $request->get('range', '30d');
+        $reportStartDate = null;
+        $reportEndDate = now()->endOfDay();
+        $reportRangeLabel = 'Last 30 Days';
 
-        $orderStatusBreakdown = Order::select('status', DB::raw('COUNT(*) as count'))
+        switch ($reportRange) {
+            case 'today':
+                $reportStartDate = now()->startOfDay();
+                $reportRangeLabel = 'Today';
+                break;
+            case '7d':
+                $reportStartDate = now()->subDays(7)->startOfDay();
+                $reportRangeLabel = 'Last 7 Days';
+                break;
+            case 'this_month':
+                $reportStartDate = now()->startOfMonth()->startOfDay();
+                $reportRangeLabel = 'This Month';
+                break;
+            case 'last_month':
+                $reportStartDate = now()->subMonth()->startOfMonth()->startOfDay();
+                $reportEndDate = now()->subMonth()->endOfMonth()->endOfDay();
+                $reportRangeLabel = 'Last Month';
+                break;
+            case 'this_year':
+                $reportStartDate = now()->startOfYear()->startOfDay();
+                $reportRangeLabel = 'This Year';
+                break;
+            case 'all':
+                $reportStartDate = null;
+                $reportRangeLabel = 'All Time';
+                break;
+            default:
+                $reportRange = '30d';
+                $reportStartDate = now()->subDays(30)->startOfDay();
+                $reportRangeLabel = 'Last 30 Days';
+        }
+
+        $reportOrderQuery = Order::query();
+        $reportItemQuery = DB::table('order_items')->join('orders', 'order_items.order_id', '=', 'orders.id');
+        $reportUserQuery = User::query();
+        $reportDailyQuery = Order::where('status', '!=', 'cancelled');
+
+        if ($reportStartDate) {
+            $reportOrderQuery->whereBetween('created_at', [$reportStartDate, $reportEndDate]);
+            $reportItemQuery->whereBetween('orders.created_at', [$reportStartDate, $reportEndDate]);
+            $reportUserQuery->whereBetween('created_at', [$reportStartDate, $reportEndDate]);
+            $reportDailyQuery->whereBetween('created_at', [$reportStartDate, $reportEndDate]);
+        }
+
+        $reportTotalRevenue = (float) $reportOrderQuery->clone()->where('status', '!=', 'cancelled')->sum('total') ?? 0;
+        $reportTotalOrders = (int) $reportOrderQuery->clone()->count();
+        $reportAvgOrderValue = $reportTotalOrders > 0 ? $reportTotalRevenue / $reportTotalOrders : 0;
+        $reportTotalDiscounts = (float) $reportOrderQuery->clone()->where('status', '!=', 'cancelled')->sum('discount') ?? 0;
+
+        $orderStatusBreakdown = $reportOrderQuery->clone()
+            ->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status');
 
-        $topProducts = DB::table('order_items')
-            ->select('product_name', 'product_brand', DB::raw('COALESCE(SUM(quantity), 0) as total_sold'), DB::raw('COALESCE(SUM(product_price * quantity), 0) as revenue'))
-            ->groupBy('product_name', 'product_brand')
+        $topProducts = $reportItemQuery
+            ->select('order_items.product_name', 'order_items.product_brand', DB::raw('COALESCE(SUM(order_items.quantity), 0) as total_sold'), DB::raw('COALESCE(SUM(order_items.product_price * order_items.quantity), 0) as revenue'))
+            ->groupBy('order_items.product_name', 'order_items.product_brand')
             ->orderByDesc('total_sold')
             ->limit(10)
             ->get();
 
-        $dailyRevenue = Order::select(
-            DB::raw("DATE(created_at) as day"),
-            DB::raw('COALESCE(SUM(total), 0) as revenue'),
-            DB::raw('COUNT(*) as orders')
-        )
-            ->where('status', '!=', 'cancelled')
-            ->where('created_at', '>=', now()->subDays(30))
+        $dailyRevenue = $reportDailyQuery
+            ->select(
+                DB::raw("DATE(created_at) as day"),
+                DB::raw('COALESCE(SUM(total), 0) as revenue'),
+                DB::raw('COUNT(*) as orders')
+            )
             ->groupBy('day')
             ->orderBy('day')
             ->get();
 
-        $userGrowth = User::select(
-            DB::raw("DATE(created_at) as day"),
-            DB::raw('COUNT(*) as count')
-        )
-            ->where('created_at', '>=', now()->subDays(30))
+        $userGrowth = $reportUserQuery
+            ->select(
+                DB::raw("DATE(created_at) as day"),
+                DB::raw('COUNT(*) as count')
+            )
             ->groupBy('day')
             ->orderBy('day')
             ->get();
@@ -223,7 +272,11 @@ class DashboardController extends Controller
             'orderStatusBreakdown',
             'topProducts',
             'dailyRevenue',
-            'userGrowth'
+            'userGrowth',
+            'reportRange',
+            'reportRangeLabel',
+            'reportStartDate',
+            'reportEndDate'
         ));
     }
 

@@ -82,78 +82,78 @@
             </section>
 
             <aside class="payment-summary-card" aria-label="Order summary">
-                    <h2 class="payment-card-title">Cart</h2>
-                    <div class="payment-cart-items">
-                        @foreach (array_values($cart) as $index => $item)
-                            <div class="payment-cart-item">
-                                <div class="payment-cart-thumb">
-                                    <img src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}">
-                                    <span class="payment-cart-badge">{{ $index + 1 }}</span>
-                                </div>
-                                <div class="payment-cart-info">
-                                    <strong>{{ $item['name'] }}</strong>
-                                    <span>Quantity: {{ $item['quantity'] }}</span>
-                                    <span class="payment-cart-size">Size: {{ $item['size'] ?? 'One Size' }}</span>
-                                </div>
-                                <span class="payment-cart-price">$ {{ number_format($item['price'], 2) }}</span>
+                <h2 class="payment-card-title">Cart</h2>
+                <div class="payment-cart-items">
+                    @foreach (array_values($cart) as $index => $item)
+                        <div class="payment-cart-item">
+                            <div class="payment-cart-thumb">
+                                <img src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}">
+                                <span class="payment-cart-badge">{{ $index + 1 }}</span>
                             </div>
-                        @endforeach
-                    </div>
-
-                    @if (session('promo_error'))
-                        <div style="color:#c00;background:#ffeaea;padding:10px 14px;border-radius:8px;font-size:0.75rem;margin-bottom:12px;">{{ session('promo_error') }}</div>
-                    @endif
-                    @if (session('promo_success'))
-                        <div style="color:#228b22;background:rgba(34,139,34,0.08);padding:10px 14px;border-radius:8px;font-size:0.75rem;margin-bottom:12px;">{{ session('promo_success') }}</div>
-                    @endif
-
-                    @if ($promoCode && $discount > 0)
-                        <div class="payment-promo">
-                            <span class="payment-promo-code"><i data-lucide="tag"></i> {{ strtoupper($promoCode) }}</span>
-                            <form method="post" action="{{ route('remove-promo') }}">
-                                @csrf
-                                <button type="submit" class="payment-promo-remove">Remove</button>
-                            </form>
+                            <div class="payment-cart-info">
+                                <strong>{{ $item['name'] }}</strong>
+                                <span>Quantity: {{ $item['quantity'] }}</span>
+                                <span class="payment-cart-size">Size: {{ $item['size'] ?? 'One Size' }}</span>
+                            </div>
+                            <span class="payment-cart-price">$ {{ number_format($item['price'], 2) }}</span>
                         </div>
-                    @else
-                        <form method="post" action="{{ route('apply-promo') }}" class="payment-promo">
+                    @endforeach
+                </div>
+
+                @if (session('promo_error'))
+                    <div style="color:#c00;background:#ffeaea;padding:10px 14px;border-radius:8px;font-size:0.75rem;margin-bottom:12px;">{{ session('promo_error') }}</div>
+                @endif
+                @if (session('promo_success'))
+                    <div style="color:#228b22;background:rgba(34,139,34,0.08);padding:10px 14px;border-radius:8px;font-size:0.75rem;margin-bottom:12px;">{{ session('promo_success') }}</div>
+                @endif
+
+                @if ($promoCode && $discount > 0)
+                    <div class="payment-promo">
+                        <span class="payment-promo-code"><i data-lucide="tag"></i> {{ strtoupper($promoCode) }}</span>
+                        <form method="post" action="{{ route('remove-promo') }}">
                             @csrf
-                            <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}">
-                            <button type="submit">Apply</button>
+                            <button type="submit" class="payment-promo-remove">Remove</button>
                         </form>
-                    @endif
-
-                    <hr class="payment-divider">
-
-                    <dl class="payment-costs">
-                        <div>
-                            <dt>Subtotal</dt>
-                            <dd>$ {{ number_format($subtotal, 2) }}</dd>
-                        </div>
-                        <div>
-                            <dt>Shipping</dt>
-                            <dd>$ {{ number_format($shippingPrice, 2) }}</dd>
-                        </div>
-                        <div>
-                            <dt>Taxes (1.8%)</dt>
-                            <dd>$ {{ number_format($taxes, 2) }}</dd>
-                        </div>
-                        @if ($discount > 0)
-                            <div style="color:#228b22;">
-                                <dt>Discount</dt>
-                                <dd>-$ {{ number_format($discount, 2) }}</dd>
-                            </div>
-                        @endif
-                    </dl>
-
-                    <hr class="payment-divider">
-
-                    <div class="payment-total">
-                        <span>Total</span>
-                        <strong>$ {{ number_format($total, 2) }}</strong>
                     </div>
+                @else
+                    <form method="post" action="{{ route('apply-promo') }}" class="payment-promo">
+                        @csrf
+                        <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}">
+                        <button type="submit">Apply</button>
+                    </form>
+                @endif
 
-                    <button type="submit" form="payment-form" class="payment-checkout-btn">Place Order</button>
+                <hr class="payment-divider">
+
+                <dl class="payment-costs">
+                    <div>
+                        <dt>Subtotal</dt>
+                        <dd>$ {{ number_format($subtotal, 2) }}</dd>
+                    </div>
+                    <div>
+                        <dt>Shipping</dt>
+                        <dd>$ {{ number_format($shippingPrice, 2) }}</dd>
+                    </div>
+                    <div>
+                        <dt>Taxes (1.8%)</dt>
+                        <dd>$ {{ number_format($taxes, 2) }}</dd>
+                    </div>
+                    @if ($discount > 0)
+                        <div style="color:#228b22;">
+                            <dt>Discount</dt>
+                            <dd>-$ {{ number_format($discount, 2) }}</dd>
+                        </div>
+                    @endif
+                </dl>
+
+                <hr class="payment-divider">
+
+                <div class="payment-total">
+                    <span>Total</span>
+                    <strong>$ {{ number_format($total, 2) }}</strong>
+                </div>
+
+                <button type="submit" form="payment-form" class="payment-checkout-btn">Place Order</button>
             </aside>
         </div>
     </main>
