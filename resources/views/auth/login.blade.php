@@ -51,14 +51,37 @@
             fetch(form.action, {
                 method: 'POST',
                 body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
                 credentials: 'same-origin'
             }).then(function(response) {
-                var url = response.url;
-                if (url.indexOf('/profile') !== -1 || url.indexOf('/admin') !== -1) {
-                    window.location.href = url;
+                var contentType = response.headers.get('content-type') || '';
+
+                if (response.redirected && response.url.indexOf('/login') === -1) {
+                    window.location.href = response.url;
                     return;
                 }
+
+                if (contentType.indexOf('application/json') !== -1) {
+                    return response.json().then(function(data) {
+                        var messages = [];
+                        if (data.message) messages.push(data.message);
+                        if (data.errors) {
+                            for (var key in data.errors) {
+                                messages.push(data.errors[key].join('\n'));
+                            }
+                        }
+                        if (messages.length) {
+                            errorBox.innerHTML = messages.join('<br>');
+                        } else {
+                            errorBox.textContent = 'Login failed. Please check your credentials.';
+                        }
+                        errorBox.style.display = 'block';
+                    });
+                }
+
                 return response.text().then(function(html) {
                     var parser = new DOMParser();
                     var doc = parser.parseFromString(html, 'text/html');

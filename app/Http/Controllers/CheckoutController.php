@@ -4,11 +4,44 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Promotion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CheckoutController extends Controller
 {
+    private function getTotals(array $cart, array $shipping = [], ?string $promoCode = null): array
+    {
+        $subtotal = array_sum(array_map(function ($item) {
+            return $item['price'] * $item['quantity'];
+        }, $cart));
+
+        $shippingPrice = match ($shipping['shipping_mode'] ?? 'standard') {
+            'fast' => 5.99,
+            default => 2.99,
+        };
+
+        $taxes = round($subtotal * 0.018, 2);
+
+        $promotion = null;
+        $discount = 0;
+
+        if ($promoCode) {
+            $promotion = Promotion::where('code', strtoupper($promoCode))->first();
+            if ($promotion && $promotion->isValid() && $subtotal >= ($promotion->min_order ?? 0)) {
+                if ($promotion->type === 'percentage') {
+                    $discount = round($subtotal * ($promotion->value / 100), 2);
+                } else {
+                    $discount = min((float) $promotion->value, $subtotal);
+                }
+            }
+        }
+
+        $total = max(0, $subtotal + $shippingPrice + $taxes - $discount);
+
+        return compact('subtotal', 'shippingPrice', 'taxes', 'discount', 'total', 'promotion');
+    }
+
     public function shipping()
     {
         $cart = session('cart', []);
@@ -16,17 +49,12 @@ class CheckoutController extends Controller
             return redirect()->route('cart')->with('error', 'Your cart is empty.');
         }
 
-        $subtotal = array_sum(array_map(function ($item) {
-            return $item['price'] * $item['quantity'];
-        }, $cart));
-
-        $shippingPrice = 2.99;
-        $taxes = round($subtotal * 0.018, 2);
-        $total = $subtotal + $shippingPrice + $taxes;
+        $promoCode = session('promo_code');
+        $totals = $this->getTotals($cart, [], $promoCode);
 
         $user = Auth::user();
 
-        return view('shipping', compact('cart', 'subtotal', 'shippingPrice', 'taxes', 'total', 'user'));
+        return view('shipping', array_merge(compact('cart', 'user', 'promoCode'), $totals));
     }
 
     public function storeShipping(Request $request)
@@ -61,22 +89,52 @@ class CheckoutController extends Controller
             return redirect()->route('cart')->with('error', 'Please complete shipping information first.');
         }
 
+        $promoCode = session('promo_code');
+        $totals = $this->getTotals($cart, $shipping, $promoCode);
+
+        $qrData = 'KHQR|theDS|' . number_format($totals['total'], 2) . '|USD';
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . urlencode($qrData);
+
+        return view('payment', array_merge(compact('cart', 'shipping', 'promoCode', 'qrUrl'), $totals));
+    }
+
+    public function applyPromo(Request $request)
+    {
+        $request->validate([
+            'promo_code' => 'required|string|max:255',
+        ]);
+
+        $code = strtoupper(trim($request->input('promo_code')));
+        $promotion = Promotion::where('code', $code)->first();
+
+        if (!$promotion) {
+            session()->forget('promo_code');
+            return back()->with('promo_error', 'Invalid promo code.');
+        }
+
+        if (!$promotion->isValid()) {
+            session()->forget('promo_code');
+            return back()->with('promo_error', 'This promo code is no longer valid.');
+        }
+
+        $cart = session('cart', []);
         $subtotal = array_sum(array_map(function ($item) {
             return $item['price'] * $item['quantity'];
         }, $cart));
 
-        $shippingPrice = match ($shipping['shipping_mode'] ?? 'standard') {
-            'fast' => 5.99,
-            default => 2.99,
-        };
+        if ($promotion->min_order && $subtotal < $promotion->min_order) {
+            session()->forget('promo_code');
+            return back()->with('promo_error', 'Minimum order of $' . number_format($promotion->min_order, 2) . ' required.');
+        }
 
-        $taxes = round($subtotal * 0.018, 2);
-        $total = $subtotal + $shippingPrice + $taxes;
+        session(['promo_code' => $code]);
+        return back()->with('promo_success', 'Promo code "' . $promotion->code . '" applied! You save ' . $promotion->discount_label . '.');
+    }
 
-        $qrData = 'KHQR|theDS|' . number_format($total, 2) . '|USD';
-        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . urlencode($qrData);
-
-        return view('payment', compact('cart', 'shipping', 'subtotal', 'shippingPrice', 'taxes', 'total', 'qrUrl'));
+    public function removePromo()
+    {
+        session()->forget('promo_code');
+        return back()->with('promo_success', 'Promo code removed.');
     }
 
     public function processPayment(Request $request)
@@ -109,17 +167,8 @@ class CheckoutController extends Controller
             return redirect()->route('payment')->withErrors($errors);
         }
 
-        $subtotal = array_sum(array_map(function ($item) {
-            return $item['price'] * $item['quantity'];
-        }, $cart));
-
-        $shippingPrice = match ($shipping['shipping_mode'] ?? 'standard') {
-            'fast' => 5.99,
-            default => 2.99,
-        };
-
-        $taxes = round($subtotal * 0.018, 2);
-        $total = $subtotal + $shippingPrice + $taxes;
+        $promoCode = session('promo_code');
+        $totals = $this->getTotals($cart, $shipping, $promoCode);
 
         $address = ($shipping['address_1'] ?? '');
         if (!empty($shipping['address_2'])) {
@@ -128,7 +177,9 @@ class CheckoutController extends Controller
 
         $order = Order::create([
             'user_id' => Auth::id(),
-            'total' => $total,
+            'promotion_id' => $totals['promotion']?->id,
+            'total' => $totals['total'],
+            'discount' => $totals['discount'],
             'status' => 'pending',
             'shipping_name' => $shipping['full_name'],
             'shipping_phone' => $shipping['phone'],
@@ -150,7 +201,11 @@ class CheckoutController extends Controller
             ]);
         }
 
-        session()->forget(['cart', 'shipping']);
+        if ($totals['promotion']) {
+            $totals['promotion']->increment('uses_count');
+        }
+
+        session()->forget(['cart', 'shipping', 'promo_code']);
 
         return redirect()->route('profile', ['ordered' => 1]);
     }

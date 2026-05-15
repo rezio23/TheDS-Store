@@ -164,7 +164,7 @@ button {
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    gap: 24px;
     margin-bottom: 32px;
 }
 
@@ -234,7 +234,7 @@ button {
 }
 
 .admin-chart-section {
-    margin-bottom: 24px;
+    margin-bottom: 0;
 }
 
 .admin-chart-wrap {
@@ -250,6 +250,52 @@ button {
     height: 100%;
     color: var(--muted);
     font-size: 0.75rem;
+}
+
+/* Promotion overview */
+.promo-overview {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.promo-overview__item {
+    flex: 1;
+    text-align: center;
+    padding: 14px 10px;
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    min-width: 0;
+}
+
+.promo-overview__item span {
+    display: block;
+    font-size: 0.52rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.promo-overview__item strong {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+}
+
+.promo-overview__item--lost strong {
+    color: #c62828;
+}
+
+.promo-chart-container {
+    position: relative;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .admin-table-wrap {

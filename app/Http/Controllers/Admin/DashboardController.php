@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Promotion;
 use App\Models\User;
 use App\Models\UserRequest;
 use Illuminate\Http\RedirectResponse;
@@ -43,6 +44,15 @@ class DashboardController extends Controller
             }
             if ($request->has('send_announcement')) {
                 return $this->sendAnnouncement($request);
+            }
+            if ($request->has('add_promotion')) {
+                return $this->addPromotion($request);
+            }
+            if ($request->has('delete_promotion')) {
+                return $this->deletePromotion($request);
+            }
+            if ($request->has('toggle_promotion')) {
+                return $this->togglePromotion($request);
             }
         }
 
@@ -95,7 +105,7 @@ class DashboardController extends Controller
         $allProducts = $productsQuery->get();
 
         // All orders
-        $allOrders = Order::with('user')->orderBy('created_at', 'desc')->get();
+        $allOrders = Order::with(['user', 'promotion'])->orderBy('created_at', 'desc')->get();
 
         // All requests
         $allRequests = UserRequest::with('user')->orderBy('created_at', 'desc')->get();
@@ -109,6 +119,15 @@ class DashboardController extends Controller
             'price_desc' => 'Price (High to Low)',
         ];
         $currentSortLabel = $sortLabels[$selectedSort] ?? 'Number';
+
+        // Promotions
+        $allPromotions = Promotion::orderBy('created_at', 'desc')->get();
+        $promotionChartData = Promotion::orderBy('uses_count', 'desc')->limit(10)->get(['code', 'uses_count']);
+
+        $promoOrders = Order::whereNotNull('promotion_id');
+        $promoRevenueEarned = (float) $promoOrders->clone()->sum('total');
+        $promoRevenueLost = (float) $promoOrders->clone()->sum('discount');
+        $promoTotalUses = (int) $promoOrders->clone()->count();
 
         // Announcements
         $announcementStatus = $request->get('status', '');
@@ -141,7 +160,12 @@ class DashboardController extends Controller
             'selectedSort',
             'currentSortLabel',
             'announcementStatus',
-            'announcements'
+            'announcements',
+            'allPromotions',
+            'promotionChartData',
+            'promoRevenueEarned',
+            'promoRevenueLost',
+            'promoTotalUses'
         ));
     }
 
@@ -318,5 +342,50 @@ class DashboardController extends Controller
 
         $status = 'success:' . $sentCount;
         return redirect()->route('admin.dashboard', ['tab' => 'announcements', 'status' => $status]);
+    }
+
+    private function addPromotion(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'code' => 'required|string|max:255|unique:promotions,code',
+            'type' => 'required|in:percentage,fixed',
+            'value' => 'required|numeric|min:0',
+            'min_order' => 'nullable|numeric|min:0',
+            'max_uses' => 'nullable|integer|min:1',
+            'starts_at' => 'nullable|date',
+            'expires_at' => 'nullable|date|after_or_equal:starts_at',
+        ]);
+
+        Promotion::create([
+            'code' => strtoupper($data['code']),
+            'type' => $data['type'],
+            'value' => $data['value'],
+            'min_order' => !empty($data['min_order']) ? $data['min_order'] : null,
+            'max_uses' => !empty($data['max_uses']) ? $data['max_uses'] : null,
+            'starts_at' => !empty($data['starts_at']) ? $data['starts_at'] : null,
+            'expires_at' => !empty($data['expires_at']) ? $data['expires_at'] : null,
+            'is_active' => true,
+        ]);
+
+        return redirect()->route('admin.dashboard', ['tab' => 'promotions']);
+    }
+
+    private function deletePromotion(Request $request): RedirectResponse
+    {
+        $promoId = (int) $request->input('promotion_id', 0);
+        if ($promoId > 0) {
+            Promotion::where('id', $promoId)->delete();
+        }
+        return redirect()->route('admin.dashboard', ['tab' => 'promotions']);
+    }
+
+    private function togglePromotion(Request $request): RedirectResponse
+    {
+        $promoId = (int) $request->input('promotion_id', 0);
+        $promo = Promotion::find($promoId);
+        if ($promo) {
+            $promo->update(['is_active' => !$promo->is_active]);
+        }
+        return redirect()->route('admin.dashboard', ['tab' => 'promotions']);
     }
 }

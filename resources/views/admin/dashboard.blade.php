@@ -37,6 +37,9 @@
             <a href="{{ route('admin.dashboard') }}?tab=announcements" class="admin-nav-link {{ $activeTab === 'announcements' ? 'is-active' : '' }}">
                 <i data-lucide="megaphone"></i> Announcements
             </a>
+            <a href="{{ route('admin.dashboard') }}?tab=promotions" class="admin-nav-link {{ $activeTab === 'promotions' ? 'is-active' : '' }}">
+                <i data-lucide="tag"></i> Promotions
+            </a>
         </nav>
         <div class="admin-sidebar-footer">
             <span class="admin-email">{{ Auth::user()->email ?? '' }}</span>
@@ -86,14 +89,40 @@
                 </div>
             </div>
 
-            <div class="admin-section admin-chart-section">
-                <h2>Monthly Revenue</h2>
-                <div class="admin-chart-wrap">
-                    @if ($monthlyRevenue->isEmpty())
-                        <div class="admin-chart-empty">No revenue data yet.</div>
-                    @else
-                        <canvas id="revenueChart"></canvas>
-                    @endif
+            <div class="admin-sections">
+                <div class="admin-section admin-chart-section">
+                    <h2>Monthly Revenue</h2>
+                    <div class="admin-chart-wrap">
+                        @if ($monthlyRevenue->isEmpty())
+                            <div class="admin-chart-empty">No revenue data yet.</div>
+                        @else
+                            <canvas id="revenueChart"></canvas>
+                        @endif
+                    </div>
+                </div>
+                <div class="admin-section admin-chart-section">
+                    <h2>Promotion Overview</h2>
+                    <div class="promo-overview">
+                        <div class="promo-overview__item">
+                            <span>Earned</span>
+                            <strong>${{ number_format($promoRevenueEarned, 2) }}</strong>
+                        </div>
+                        <div class="promo-overview__item promo-overview__item--lost">
+                            <span>Lost</span>
+                            <strong>-${{ number_format($promoRevenueLost, 2) }}</strong>
+                        </div>
+                        <div class="promo-overview__item">
+                            <span>Used</span>
+                            <strong>{{ number_format($promoTotalUses) }}</strong>
+                        </div>
+                    </div>
+                    <div class="promo-chart-container">
+                        @if ($promoTotalUses <= 0)
+                            <div class="admin-chart-empty">No promo usage yet.</div>
+                        @else
+                            <canvas id="promotionChart"></canvas>
+                        @endif
+                    </div>
                 </div>
             </div>
 
@@ -164,6 +193,8 @@
                             <th>ID</th>
                             <th>Customer</th>
                             <th>Total</th>
+                            <th>Discount</th>
+                            <th>Promo</th>
                             <th>Status</th>
                             <th>Shipping</th>
                             <th>Date</th>
@@ -176,6 +207,8 @@
                                 <td>#{{ $order->id }}</td>
                                 <td>{{ $order->user->full_name ?? 'Guest' }}</td>
                                 <td>${{ number_format($order->total, 2) }}</td>
+                                <td>{{ $order->discount > 0 ? '-$' . number_format($order->discount, 2) : '—' }}</td>
+                                <td>{{ $order->promotion->code ?? '—' }}</td>
                                 <td><span class="admin-badge-status status-{{ $order->status }}">{{ ucfirst($order->status) }}</span></td>
                                 <td>{{ $order->shipping_mode ?? 'Standard' }}</td>
                                 <td>{{ $order->created_at->format('M d, Y H:i') }}</td>
@@ -955,6 +988,125 @@
                     </table>
                 </div>
             </div>
+
+        @elseif ($activeTab === 'promotions')
+            <div class="admin-header">
+                <h1>Promotions</h1>
+            </div>
+
+            <div class="admin-section" style="margin-bottom: 24px;">
+                <button type="button" class="admin-btn admin-toggle" style="width:100%;" data-admin-toggle aria-expanded="false" aria-controls="add-promotion-form">
+                    <i data-lucide="plus"></i> <span>Add New Promotion</span>
+                    <i data-lucide="chevron-down" class="admin-toggle__icon" aria-hidden="true"></i>
+                </button>
+
+                <form id="add-promotion-form" method="post" action="{{ route('admin.dashboard') }}?tab=promotions" class="admin-form admin-panel-content" data-admin-content hidden>
+                    @csrf
+                    <div class="admin-form-grid">
+                        <div class="admin-form-group">
+                            <label for="promo-code">Promo Code</label>
+                            <input type="text" id="promo-code" name="code" placeholder="e.g. SUMMER25" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Discount Type</label>
+                            <div class="admin-select-control" data-admin-select style="width:100%;border-radius:8px;">
+                                <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="promo-type-menu" style="width:100%;">
+                                    <span data-admin-select-current>Percentage</span>
+                                    <i data-lucide="chevron-down"></i>
+                                </button>
+                                <div class="admin-select-menu" id="promo-type-menu" role="listbox" data-admin-select-menu>
+                                    <button type="button" role="option" data-admin-select-option data-value="percentage" class="is-selected" aria-selected="true">Percentage</button>
+                                    <button type="button" role="option" data-admin-select-option data-value="fixed" aria-selected="false">Fixed Amount</button>
+                                </div>
+                                <input type="hidden" name="type" id="promo-type" value="percentage" data-admin-select-input>
+                            </div>
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="promo-value">Discount Value</label>
+                            <input type="number" id="promo-value" name="value" step="0.01" min="0" placeholder="e.g. 25 for 25% or $25" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="promo-min-order">Minimum Order ($)</label>
+                            <input type="number" id="promo-min-order" name="min_order" step="0.01" min="0" placeholder="Optional">
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="promo-max-uses">Max Uses</label>
+                            <input type="number" id="promo-max-uses" name="max_uses" min="1" placeholder="Optional">
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="promo-starts">Starts At</label>
+                            <input type="datetime-local" id="promo-starts" name="starts_at">
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="promo-expires">Expires At</label>
+                            <input type="datetime-local" id="promo-expires" name="expires_at">
+                        </div>
+                    </div>
+                    <div class="admin-form-actions">
+                        <button type="submit" name="add_promotion" class="admin-btn">Create Promotion</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Code</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Min Order</th>
+                            <th>Uses</th>
+                            <th>Starts</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($allPromotions as $promo)
+                            <tr>
+                                <td>{{ $promo->id }}</td>
+                                <td><strong>{{ $promo->code }}</strong></td>
+                                <td>{{ ucfirst($promo->type) }}</td>
+                                <td>{{ $promo->discount_label }}</td>
+                                <td>{{ $promo->min_order ? '$' . number_format($promo->min_order, 2) : '—' }}</td>
+                                <td>{{ $promo->uses_count }}{{ $promo->max_uses ? '/' . $promo->max_uses : '' }}</td>
+                                <td>{{ $promo->starts_at ? $promo->starts_at->format('M d, Y H:i') : '—' }}</td>
+                                <td>{{ $promo->expires_at ? $promo->expires_at->format('M d, Y H:i') : '—' }}</td>
+                                <td>
+                                    @if ($promo->isValid())
+                                        <span class="admin-badge-status status-delivered">Active</span>
+                                    @else
+                                        <span class="admin-badge-status status-cancelled">{{ $promo->is_active ? 'Expired' : 'Inactive' }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                                        <form method="post" action="{{ route('admin.dashboard') }}?tab=promotions" style="display:inline;">
+                                            @csrf
+                                            <input type="hidden" name="promotion_id" value="{{ $promo->id }}">
+                                            <button type="submit" name="toggle_promotion" class="admin-btn admin-btn--small">
+                                                {{ $promo->is_active ? 'Deactivate' : 'Activate' }}
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{{ route('admin.dashboard') }}?tab=promotions" onsubmit="return confirm('Delete this promotion?');" style="display:inline;">
+                                            @csrf
+                                            <input type="hidden" name="promotion_id" value="{{ $promo->id }}">
+                                            <button type="submit" name="delete_promotion" class="admin-btn admin-btn--danger admin-btn--small">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" style="text-align:center;color:var(--muted);">No promotions created yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         @endif
     </main>
 </div>
@@ -1018,6 +1170,76 @@
                     }
                 }
             }
+        });
+    })();
+</script>
+@endif
+
+@if ($promoTotalUses > 0)
+<script>
+    (function() {
+        var ctx = document.getElementById('promotionChart');
+        if (!ctx) return;
+        var totalUses = {{ $promoTotalUses }};
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Revenue Earned', 'Revenue Lost'],
+                datasets: [{
+                    data: [{{ $promoRevenueEarned }}, {{ $promoRevenueLost }}],
+                    backgroundColor: [
+                        'rgba(192, 107, 0, 0.8)',
+                        'rgba(230, 57, 70, 0.65)'
+                    ],
+                    borderColor: [
+                        'rgba(192, 107, 0, 1)',
+                        'rgba(230, 57, 70, 1)'
+                    ],
+                    borderWidth: 1,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { size: 11, family: "'Krona One', Arial, sans-serif" },
+                            padding: 16,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var val = context.parsed;
+                                var total = context.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                var pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                return ' $' + val.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: 'centerText',
+                beforeDraw: function(chart) {
+                    var width = chart.width,
+                        height = chart.height,
+                        ctx = chart.ctx;
+                    ctx.restore();
+                    ctx.textBaseline = 'middle';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = 'var(--ink)';
+                    ctx.font = "600 1em 'Krona One', Arial, sans-serif";
+                    ctx.fillText(totalUses.toLocaleString(), width / 2, height / 2);
+                    ctx.save();
+                }
+            }]
         });
     })();
 </script>

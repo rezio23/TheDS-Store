@@ -13,7 +13,9 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'promotion_id',
         'total',
+        'discount',
         'status',
         'shipping_name',
         'shipping_phone',
@@ -27,9 +29,15 @@ class Order extends Model
     {
         return [
             'total' => 'decimal:2',
+            'discount' => 'decimal:2',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    public function promotion()
+    {
+        return $this->belongsTo(Promotion::class);
     }
 
     public function user()

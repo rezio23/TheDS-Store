@@ -30,6 +30,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/shipping', [CheckoutController::class, 'storeShipping']);
     Route::get('/payment', [CheckoutController::class, 'payment'])->name('payment');
     Route::post('/payment', [CheckoutController::class, 'processPayment']);
+    Route::post('/apply-promo', [CheckoutController::class, 'applyPromo'])->name('apply-promo');
+    Route::post('/remove-promo', [CheckoutController::class, 'removePromo'])->name('remove-promo');
 
     // Favorites
     Route::post('/favorites/toggle', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
