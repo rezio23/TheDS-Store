@@ -24,10 +24,10 @@
             </div>
         @endif
 
-        <form action="{{ route('payment') }}" method="post" class="payment-layout-form" id="payment-form" autocomplete="off">
-            @csrf
-            <div class="payment-layout">
-                <section class="payment-form-card" aria-label="Payment details">
+        <div class="payment-layout">
+            <section class="payment-form-card" aria-label="Payment details">
+                <form action="{{ route('payment') }}" method="post" class="payment-layout-form" id="payment-form" autocomplete="off">
+                    @csrf
                     <h2 class="payment-card-title">Payment Method</h2>
 
                     <div class="payment-step-tabs" role="tablist" aria-label="Payment methods">
@@ -78,9 +78,10 @@
                             </div>
                         </div>
                     </div>
-                </section>
+                </form>
+            </section>
 
-                <aside class="payment-summary-card" aria-label="Order summary">
+            <aside class="payment-summary-card" aria-label="Order summary">
                     <h2 class="payment-card-title">Cart</h2>
                     <div class="payment-cart-items">
                         @foreach (array_values($cart) as $index => $item)
@@ -107,17 +108,17 @@
                     @endif
 
                     @if ($promoCode && $discount > 0)
-                        <div class="payment-promo" style="grid-template-columns: 1fr auto;align-items:center;">
-                            <span style="font-size:0.75rem;color:var(--accent);font-weight:600;"><i data-lucide="tag" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i> {{ strtoupper($promoCode) }}</span>
-                            <form method="post" action="{{ route('remove-promo') }}" style="display:inline;">
+                        <div class="payment-promo">
+                            <span class="payment-promo-code"><i data-lucide="tag"></i> {{ strtoupper($promoCode) }}</span>
+                            <form method="post" action="{{ route('remove-promo') }}">
                                 @csrf
-                                <button type="submit" style="background:transparent;color:#c00;border:none;font-size:0.65rem;cursor:pointer;text-decoration:underline;">Remove</button>
+                                <button type="submit" class="payment-promo-remove">Remove</button>
                             </form>
                         </div>
                     @else
                         <form method="post" action="{{ route('apply-promo') }}" class="payment-promo">
                             @csrf
-                            <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}" required>
+                            <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}">
                             <button type="submit">Apply</button>
                         </form>
                     @endif
@@ -152,10 +153,9 @@
                         <strong>$ {{ number_format($total, 2) }}</strong>
                     </div>
 
-                    <button type="submit" class="payment-checkout-btn">Place Order</button>
-                </aside>
-            </div>
-        </form>
+                    <button type="submit" form="payment-form" class="payment-checkout-btn">Place Order</button>
+            </aside>
+        </div>
     </main>
 @endsection
 

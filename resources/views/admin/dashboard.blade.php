@@ -40,6 +40,9 @@
             <a href="{{ route('admin.dashboard') }}?tab=promotions" class="admin-nav-link {{ $activeTab === 'promotions' ? 'is-active' : '' }}">
                 <i data-lucide="tag"></i> Promotions
             </a>
+            <a href="{{ route('admin.dashboard') }}?tab=reports" class="admin-nav-link {{ $activeTab === 'reports' ? 'is-active' : '' }}">
+                <i data-lucide="bar-chart-3"></i> Reports
+            </a>
         </nav>
         <div class="admin-sidebar-footer">
             <span class="admin-email">{{ Auth::user()->email ?? '' }}</span>
@@ -126,7 +129,7 @@
                 </div>
             </div>
 
-            <div class="admin-sections">
+            <div class="admin-sections" style="margin-top: 24px;">
                 <div class="admin-section">
                     <h2>Recent Orders</h2>
                     <div class="admin-table-wrap">
@@ -779,8 +782,11 @@
                     <tbody>
                         @foreach ($allRequests as $req)
                             @php
-                                $ext = $req->attachment ? pathinfo($req->attachment, PATHINFO_EXTENSION) : '';
+                                $cleanAttachment = is_string($req->attachment) ? ltrim($req->attachment, '/') : '';
+                                $hasAttachment = $cleanAttachment !== '' && $cleanAttachment !== '[]' && \Illuminate\Support\Facades\Storage::disk('public')->exists($cleanAttachment);
+                                $ext = $hasAttachment ? pathinfo($cleanAttachment, PATHINFO_EXTENSION) : '';
                                 $isImage = in_array(strtolower($ext), ['jpg','jpeg','png','gif','webp'], true);
+                                $attachmentUrl = $hasAttachment ? asset('storage/' . $cleanAttachment) : '';
                             @endphp
                             <tr>
                                 <td>#{{ $req->id }}</td>
@@ -788,10 +794,10 @@
                                 <td>{{ $req->phone ?? '—' }}</td>
                                 <td>{{ $req->subject }}</td>
                                 <td>
-                                    @if ($req->attachment)
+                                    @if ($hasAttachment)
                                         <span style="display:inline-flex;align-items:center;gap:4px;color:#2a9d8f;font-size:0.7rem;"
                                               title="Has {{ $isImage ? 'image' : strtoupper($ext) }}"
-                                              data-req-file="{{ $req->attachment }}"
+                                              data-req-file="{{ $cleanAttachment }}"
                                               data-req-file-type="{{ $isImage ? 'image' : strtoupper($ext) }}">
                                             <i data-lucide="paperclip" style="width:12px;height:12px;"></i>
                                             @if ($isImage)
@@ -808,7 +814,7 @@
                                 <td>{{ $req->created_at->format('M d, Y H:i') }}</td>
                                 <td>
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                                        <button type="button" class="admin-btn admin-btn--small" data-req-view data-req-id="{{ $req->id }}" data-req-email="{{ $req->email }}" data-req-phone="{{ $req->phone ?? '—' }}" data-req-subject="{{ $req->subject }}" data-req-message="{{ htmlspecialchars($req->message, ENT_QUOTES, 'UTF-8') }}" data-req-attachment="{{ $req->attachment ? asset('storage/' . $req->attachment) : '' }}" data-req-file-type="{{ $isImage ? 'image' : strtoupper($ext) }}">View</button>
+                                        <button type="button" class="admin-btn admin-btn--small" data-req-view data-req-id="{{ $req->id }}" data-req-email="{{ $req->email }}" data-req-phone="{{ $req->phone ?? '—' }}" data-req-subject="{{ $req->subject }}" data-req-message="{{ htmlspecialchars($req->message, ENT_QUOTES, 'UTF-8') }}" data-req-attachment="{{ $attachmentUrl }}" data-req-file-type="{{ $isImage ? 'image' : strtoupper($ext) }}">View</button>
                                         @if ($req->status === 'pending')
                                             <form method="post" action="{{ route('admin.dashboard') }}?tab=requests" style="display:inline;">
                                                 @csrf
@@ -910,7 +916,7 @@
                         if (attachment) {
                             fileWrap.style.display = 'block';
                             if (fileType === 'image') {
-                                fileBox.innerHTML = '<a href="' + attachment + '" target="_blank" class="admin-request-attachment"><img src="' + attachment + '" alt="Attachment" style="max-width:100%;height:auto;display:block;border-radius:10px;"></a>';
+                                fileBox.innerHTML = '<a href="' + attachment + '" target="_blank" class="admin-request-attachment"><img id="req-modal-img" src="' + attachment + '" alt="Attachment" style="max-width:100%;height:auto;display:block;border-radius:10px;" onerror="this.parentElement.outerHTML = \'<div class=\x22admin-chart-empty\x22 style=\x22height:auto;padding:40px 20px;\x22>Image failed to load.</div>\'"></a>';
                             } else {
                                 fileBox.innerHTML = '<a href="' + attachment + '" target="_blank" class="admin-request-download"><i data-lucide="download"></i>Download ' + fileType + '</a>';
                             }
@@ -1083,7 +1089,16 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @php
+                                        $pStats = $promotionOrderStats[$promo->id] ?? null;
+                                    @endphp
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                                        <button type="button" class="admin-btn admin-btn--small" data-promo-stats
+                                            data-promo-code="{{ $promo->code }}"
+                                            data-promo-revenue="{{ $pStats ? (float) $pStats->revenue : 0 }}"
+                                            data-promo-discount="{{ $pStats ? (float) $pStats->discount : 0 }}"
+                                            data-promo-uses="{{ $pStats ? (int) $pStats->uses : 0 }}"
+                                        >View Stats</button>
                                         <form method="post" action="{{ route('admin.dashboard') }}?tab=promotions" style="display:inline;">
                                             @csrf
                                             <input type="hidden" name="promotion_id" value="{{ $promo->id }}">
@@ -1107,6 +1122,295 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Promotion Detail Modal -->
+            <div id="promo-detail-modal" class="admin-product-overlay">
+                <div class="admin-product-modal" style="width: min(520px, 100%);">
+                    <button type="button" class="admin-product-modal__close" onclick="document.getElementById('promo-detail-modal').classList.remove('is-open');">
+                        <i data-lucide="x"></i>
+                    </button>
+                    <div class="admin-product-modal__info">
+                        <h2 id="promo-detail-code"></h2>
+                        <div class="promo-overview" style="margin-top: 14px;">
+                            <div class="promo-overview__item">
+                                <span>Revenue</span>
+                                <strong id="promo-detail-revenue"></strong>
+                            </div>
+                            <div class="promo-overview__item promo-overview__item--lost">
+                                <span>Discount</span>
+                                <strong id="promo-detail-discount"></strong>
+                            </div>
+                            <div class="promo-overview__item">
+                                <span>Uses</span>
+                                <strong id="promo-detail-uses"></strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="promo-detail-chart-wrap" class="promo-chart-container" style="height: 280px; margin-top: 10px;">
+                        <canvas id="promoDetailChart"></canvas>
+                    </div>
+                    <div id="promo-detail-empty" class="admin-chart-empty" style="display:none; height: 280px;">No usage data yet.</div>
+                </div>
+            </div>
+        @elseif ($activeTab === 'reports')
+            <div class="admin-header">
+                <h1>Reports</h1>
+            </div>
+
+            <div class="admin-stats">
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon"><i data-lucide="dollar-sign"></i></div>
+                    <div class="admin-stat-info">
+                        <span class="admin-stat-value">${{ number_format($reportTotalRevenue, 2) }}</span>
+                        <span class="admin-stat-label">Total Revenue</span>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon"><i data-lucide="shopping-bag"></i></div>
+                    <div class="admin-stat-info">
+                        <span class="admin-stat-value">{{ number_format($reportTotalOrders) }}</span>
+                        <span class="admin-stat-label">Total Orders</span>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon"><i data-lucide="receipt"></i></div>
+                    <div class="admin-stat-info">
+                        <span class="admin-stat-value">${{ number_format($reportAvgOrderValue, 2) }}</span>
+                        <span class="admin-stat-label">Avg Order Value</span>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon"><i data-lucide="tag"></i></div>
+                    <div class="admin-stat-info">
+                        <span class="admin-stat-value">${{ number_format($reportTotalDiscounts, 2) }}</span>
+                        <span class="admin-stat-label">Discounts Given</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-sections">
+                <div class="admin-section admin-chart-section">
+                    <h2>Revenue (Last 30 Days)</h2>
+                    <div class="admin-chart-wrap">
+                        @if ($dailyRevenue->isEmpty())
+                            <div class="admin-chart-empty">No revenue data yet.</div>
+                        @else
+                            <canvas id="dailyRevenueChart"></canvas>
+                        @endif
+                    </div>
+                </div>
+                <div class="admin-section admin-chart-section">
+                    <h2>Order Status Breakdown</h2>
+                    <div class="admin-chart-wrap">
+                        @php
+                            $hasStatusData = collect($orderStatusBreakdown)->sum() > 0;
+                        @endphp
+                        @if (!$hasStatusData)
+                            <div class="admin-chart-empty">No order data yet.</div>
+                        @else
+                            <canvas id="statusChart"></canvas>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-sections" style="margin-top: 24px;">
+                <div class="admin-section">
+                    <h2>Top Selling Products</h2>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Product</th>
+                                    <th>Brand</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($topProducts as $idx => $product)
+                                    <tr>
+                                        <td>{{ $idx + 1 }}</td>
+                                        <td>{{ $product->product_name }}</td>
+                                        <td>{{ $product->product_brand }}</td>
+                                        <td>{{ number_format($product->total_sold) }}</td>
+                                        <td>${{ number_format($product->revenue, 2) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="5" style="text-align:center;color:var(--muted);">No sales data yet.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h2>New Users (Last 30 Days)</h2>
+                    <div class="admin-chart-wrap">
+                        @if ($userGrowth->isEmpty())
+                            <div class="admin-chart-empty">No new users yet.</div>
+                        @else
+                            <canvas id="userGrowthChart"></canvas>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <script>
+            (function() {
+                // Daily Revenue Chart
+                @if (!$dailyRevenue->isEmpty())
+                var drCtx = document.getElementById('dailyRevenueChart');
+                if (drCtx) {
+                    var drLabels = [@foreach ($dailyRevenue as $d)'{{ \Carbon\Carbon::parse($d->day)->format("M d") }}',@endforeach];
+                    var drData = [@foreach ($dailyRevenue as $d){{ (float) $d->revenue }},@endforeach];
+                    new Chart(drCtx, {
+                        type: 'line',
+                        data: {
+                            labels: drLabels,
+                            datasets: [{
+                                label: 'Revenue ($)',
+                                data: drData,
+                                borderColor: 'rgba(192, 107, 0, 1)',
+                                backgroundColor: 'rgba(192, 107, 0, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointBackgroundColor: 'rgba(192, 107, 0, 1)',
+                                fill: true,
+                                tension: 0.3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return '$' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                                    ticks: {
+                                        font: { size: 11 },
+                                        callback: function(value) { return '$' + value.toLocaleString(); }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                @endif
+
+                // Status Breakdown Chart
+                @if ($hasStatusData)
+                var stCtx = document.getElementById('statusChart');
+                if (stCtx) {
+                    var statusLabels = [];
+                    var statusData = [];
+                    var statusColors = [];
+                    var statusBorderColors = [];
+                    var statusMap = {
+                        pending: { bg: 'rgba(255, 193, 7, 0.7)', border: 'rgba(255, 193, 7, 1)' },
+                        processing: { bg: 'rgba(3, 169, 244, 0.7)', border: 'rgba(3, 169, 244, 1)' },
+                        shipped: { bg: 'rgba(156, 39, 176, 0.7)', border: 'rgba(156, 39, 176, 1)' },
+                        delivered: { bg: 'rgba(46, 204, 113, 0.7)', border: 'rgba(46, 204, 113, 1)' },
+                        cancelled: { bg: 'rgba(230, 57, 70, 0.7)', border: 'rgba(230, 57, 70, 1)' }
+                    };
+                    @foreach ($orderStatusBreakdown as $status => $count)
+                        statusLabels.push('{{ ucfirst($status) }}');
+                        statusData.push({{ (int) $count }});
+                        var colors = statusMap['{{ $status }}'] || { bg: 'rgba(150,150,150,0.7)', border: 'rgba(150,150,150,1)' };
+                        statusColors.push(colors.bg);
+                        statusBorderColors.push(colors.border);
+                    @endforeach
+
+                    new Chart(stCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: statusLabels,
+                            datasets: [{
+                                data: statusData,
+                                backgroundColor: statusColors,
+                                borderColor: statusBorderColors,
+                                borderWidth: 1,
+                                hoverOffset: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        font: { size: 11, family: "'Krona One', Arial, sans-serif" },
+                                        padding: 12,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                @endif
+
+                // User Growth Chart
+                @if (!$userGrowth->isEmpty())
+                var ugCtx = document.getElementById('userGrowthChart');
+                if (ugCtx) {
+                    var ugLabels = [@foreach ($userGrowth as $u)'{{ \Carbon\Carbon::parse($u->day)->format("M d") }}',@endforeach];
+                    var ugData = [@foreach ($userGrowth as $u){{ (int) $u->count }},@endforeach];
+                    new Chart(ugCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ugLabels,
+                            datasets: [{
+                                label: 'New Users',
+                                data: ugData,
+                                backgroundColor: 'rgba(42, 157, 143, 0.7)',
+                                borderColor: 'rgba(42, 157, 143, 1)',
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barPercentage: 0.6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                                    ticks: { font: { size: 11 }, stepSize: 1 }
+                                }
+                            }
+                        }
+                    });
+                }
+                @endif
+            })();
+            </script>
+
         @endif
     </main>
 </div>
@@ -1182,7 +1486,7 @@
         if (!ctx) return;
         var totalUses = {{ $promoTotalUses }};
         new Chart(ctx, {
-            type: 'doughnut',
+            type: 'pie',
             data: {
                 labels: ['Revenue Earned', 'Revenue Lost'],
                 datasets: [{
@@ -1202,7 +1506,6 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '65%',
                 plugins: {
                     legend: {
                         position: 'bottom',
@@ -1224,22 +1527,7 @@
                         }
                     }
                 }
-            },
-            plugins: [{
-                id: 'centerText',
-                beforeDraw: function(chart) {
-                    var width = chart.width,
-                        height = chart.height,
-                        ctx = chart.ctx;
-                    ctx.restore();
-                    ctx.textBaseline = 'middle';
-                    ctx.textAlign = 'center';
-                    ctx.fillStyle = 'var(--ink)';
-                    ctx.font = "600 1em 'Krona One', Arial, sans-serif";
-                    ctx.fillText(totalUses.toLocaleString(), width / 2, height / 2);
-                    ctx.save();
-                }
-            }]
+            }
         });
     })();
 </script>
@@ -1295,8 +1583,12 @@
     });
 
     // Custom select dropdowns (same UX as shop selects)
-    var selectControls = document.querySelectorAll('[data-admin-select]');
-    selectControls.forEach(function(control) {
+    window.initAdminSelects = function(root) {
+        root = root || document;
+        var selectControls = root.querySelectorAll('[data-admin-select]');
+        selectControls.forEach(function(control) {
+            if (control.dataset.adminSelectInit) return;
+            control.dataset.adminSelectInit = '1';
         var toggle = control.querySelector('[data-admin-select-toggle]');
         var menu = control.querySelector('[data-admin-select-menu]');
         var options = control.querySelectorAll('[data-admin-select-option]');
@@ -1369,6 +1661,284 @@
             }
         });
     });
+    };
+    window.initAdminSelects(document);
+})();
+</script>
+
+<script>
+(function() {
+    var modal = document.getElementById('promo-detail-modal');
+    var chartWrap = document.getElementById('promo-detail-chart-wrap');
+    var emptyMsg = document.getElementById('promo-detail-empty');
+    var promoChart = null;
+
+    function closeModal() {
+        modal.classList.remove('is-open');
+    }
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+            closeModal();
+        }
+    });
+
+    function formatMoney(n) {
+        return '$' + parseFloat(n).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    document.querySelectorAll('[data-promo-stats]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var code = btn.getAttribute('data-promo-code');
+            var revenue = parseFloat(btn.getAttribute('data-promo-revenue')) || 0;
+            var discount = parseFloat(btn.getAttribute('data-promo-discount')) || 0;
+            var uses = parseInt(btn.getAttribute('data-promo-uses'), 10) || 0;
+
+            document.getElementById('promo-detail-code').textContent = code;
+            document.getElementById('promo-detail-revenue').textContent = formatMoney(revenue);
+            document.getElementById('promo-detail-discount').textContent = '-' + formatMoney(discount);
+            document.getElementById('promo-detail-uses').textContent = uses.toLocaleString();
+
+            if (promoChart) {
+                promoChart.destroy();
+                promoChart = null;
+            }
+
+            if (uses <= 0 || (revenue <= 0 && discount <= 0)) {
+                chartWrap.style.display = 'none';
+                emptyMsg.style.display = 'flex';
+            } else {
+                chartWrap.style.display = 'flex';
+                emptyMsg.style.display = 'none';
+                var ctx = document.getElementById('promoDetailChart');
+                promoChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Revenue Earned', 'Revenue Lost'],
+                        datasets: [{
+                            data: [revenue, discount],
+                            backgroundColor: [
+                                'rgba(192, 107, 0, 0.8)',
+                                'rgba(230, 57, 70, 0.65)'
+                            ],
+                            borderColor: [
+                                'rgba(192, 107, 0, 1)',
+                                'rgba(230, 57, 70, 1)'
+                            ],
+                            borderWidth: 1,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 11, family: "'Krona One', Arial, sans-serif" },
+                                    padding: 16,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        var val = context.parsed;
+                                        var total = context.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                        var pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                        return ' ' + formatMoney(val) + ' (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ nodes: modal.querySelectorAll('i[data-lucide]') });
+            }
+            modal.classList.add('is-open');
+        });
+    });
+})();
+</script>
+<script>
+(function() {
+    var activeTab = '{{ $activeTab }}';
+    if (activeTab !== 'dashboard' && activeTab !== 'orders') return;
+
+    var csrfToken = document.querySelector('input[name="_token"]')?.value || '';
+    var adminUrl = '{{ route("admin.dashboard") }}';
+    var lastTotalOrders = null;
+    var pollInterval = 5000;
+
+    function formatMoney(n) {
+        return parseFloat(n).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function buildRecentOrderRow(order) {
+        return '<tr>' +
+            '<td>#' + order.id + '</td>' +
+            '<td>' + escapeHtml(order.customer) + '</td>' +
+            '<td>$' + formatMoney(order.total) + '</td>' +
+            '<td><span class="admin-badge-status status-' + order.status + '">' + order.status.charAt(0).toUpperCase() + order.status.slice(1) + '</span></td>' +
+            '<td>' + escapeHtml(order.date) + '</td>' +
+        '</tr>';
+    }
+
+    function buildAllOrderRow(order) {
+        var discount = order.discount > 0 ? '-$' + formatMoney(order.discount) : '—';
+        var promo = order.promo ? escapeHtml(order.promo) : '—';
+        var shipping = escapeHtml(order.shipping || 'Standard');
+        var statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+        var optionsHtml = statuses.map(function(s) {
+            var selected = order.status === s ? ' is-selected' : '';
+            var ariaSelected = order.status === s ? 'true' : 'false';
+            return '<button type="button" role="option" data-admin-select-option data-value="' + s + '" class="' + selected + '" aria-selected="' + ariaSelected + '">' + s.charAt(0).toUpperCase() + s.slice(1) + '</button>';
+        }).join('');
+        var statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+
+        return '<tr>' +
+            '<td>#' + order.id + '</td>' +
+            '<td>' + escapeHtml(order.customer) + '</td>' +
+            '<td>$' + formatMoney(order.total) + '</td>' +
+            '<td>' + discount + '</td>' +
+            '<td>' + promo + '</td>' +
+            '<td><span class="admin-badge-status status-' + order.status + '">' + statusLabel + '</span></td>' +
+            '<td>' + shipping + '</td>' +
+            '<td>' + escapeHtml(order.datetime) + '</td>' +
+            '<td>' +
+                '<form method="post" action="' + adminUrl + '?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">' +
+                    '<input type="hidden" name="_token" value="' + csrfToken + '">' +
+                    '<input type="hidden" name="order_id" value="' + order.id + '">' +
+                    '<div class="admin-select-control" data-admin-select>' +
+                        '<button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="order-status-' + order.id + '">' +
+                            '<span data-admin-select-current>' + statusLabel + '</span>' +
+                            '<i data-lucide="chevron-down"></i>' +
+                        '</button>' +
+                        '<div class="admin-select-menu" id="order-status-' + order.id + '" role="listbox" data-admin-select-menu>' +
+                            optionsHtml +
+                        '</div>' +
+                        '<input type="hidden" name="status" value="' + order.status + '" data-admin-select-input>' +
+                    '</div>' +
+                    '<button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>' +
+                '</form>' +
+            '</td>' +
+        '</tr>';
+    }
+
+    function updateStats(data) {
+        var statCards = document.querySelectorAll('.admin-stat-card');
+        statCards.forEach(function(card) {
+            var label = card.querySelector('.admin-stat-label')?.textContent?.trim();
+            var value = card.querySelector('.admin-stat-value');
+            if (!value) return;
+            if (label === 'Total Orders') {
+                value.textContent = data.totalOrders.toLocaleString();
+            } else if (label === 'Total Revenue') {
+                value.textContent = '$' + formatMoney(data.totalRevenue);
+            }
+        });
+    }
+
+    function updateRecentOrders(data) {
+        var sections = document.querySelectorAll('.admin-sections .admin-section');
+        var tbody = null;
+        sections.forEach(function(section) {
+            var h2 = section.querySelector('h2');
+            if (h2 && h2.textContent.trim() === 'Recent Orders') {
+                tbody = section.querySelector('tbody');
+            }
+        });
+        if (!tbody) return;
+
+        var html = data.recentOrders.map(buildRecentOrderRow).join('');
+        tbody.innerHTML = html;
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons({ nodes: tbody.querySelectorAll('i[data-lucide]') });
+        }
+    }
+
+    function updateAllOrders(data) {
+        var tbody = document.querySelector('.admin-header + .admin-table-wrap tbody');
+        if (!tbody) return;
+
+        var html = data.allOrders.map(buildAllOrderRow).join('');
+        tbody.innerHTML = html;
+
+        if (typeof window.initAdminSelects === 'function') {
+            window.initAdminSelects(tbody);
+        }
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons({ nodes: tbody.querySelectorAll('i[data-lucide]') });
+        }
+    }
+
+    function flashNewOrders() {
+        var ordersNav = document.querySelector('a[href*="tab=orders"]');
+        if (ordersNav) {
+            ordersNav.style.color = '#c06b00';
+            setTimeout(function() {
+                ordersNav.style.color = '';
+            }, 3000);
+        }
+
+        var sections = document.querySelectorAll('.admin-sections .admin-section');
+        sections.forEach(function(section) {
+            var h2 = section.querySelector('h2');
+            if (h2 && h2.textContent.trim() === 'Recent Orders') {
+                h2.style.color = '#c06b00';
+                setTimeout(function() {
+                    h2.style.color = '';
+                }, 3000);
+            }
+        });
+    }
+
+    function poll() {
+        fetch(adminUrl + '/orders-data', {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (!data || typeof data.totalOrders === 'undefined') return;
+
+            var hadNewOrders = lastTotalOrders !== null && data.totalOrders > lastTotalOrders;
+            lastTotalOrders = data.totalOrders;
+
+            updateStats(data);
+
+            if (activeTab === 'dashboard') {
+                updateRecentOrders(data);
+            } else if (activeTab === 'orders') {
+                updateAllOrders(data);
+            }
+
+            if (hadNewOrders) {
+                flashNewOrders();
+            }
+        })
+        .catch(function(err) {
+            // Silently ignore polling errors
+        });
+    }
+
+    poll();
+    setInterval(poll, pollInterval);
 })();
 </script>
 

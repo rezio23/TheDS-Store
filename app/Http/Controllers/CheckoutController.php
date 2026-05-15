@@ -100,11 +100,14 @@ class CheckoutController extends Controller
 
     public function applyPromo(Request $request)
     {
-        $request->validate([
-            'promo_code' => 'required|string|max:255',
-        ]);
+        $code = strtoupper(trim((string) $request->input('promo_code', '')));
+        if ($code === '') {
+            return back();
+        }
 
-        $code = strtoupper(trim($request->input('promo_code')));
+        $request->validate([
+            'promo_code' => 'string|max:255',
+        ]);
         $promotion = Promotion::where('code', $code)->first();
 
         if (!$promotion) {

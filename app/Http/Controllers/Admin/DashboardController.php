@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\UserRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -107,8 +108,44 @@ class DashboardController extends Controller
         // All orders
         $allOrders = Order::with(['user', 'promotion'])->orderBy('created_at', 'desc')->get();
 
-        // All requests
         $allRequests = UserRequest::with('user')->orderBy('created_at', 'desc')->get();
+
+        // Reports data
+        $reportTotalRevenue = Order::where('status', '!=', 'cancelled')->sum('total') ?? 0;
+        $reportTotalOrders = Order::count();
+        $reportAvgOrderValue = $reportTotalOrders > 0 ? $reportTotalRevenue / $reportTotalOrders : 0;
+        $reportTotalDiscounts = Order::where('status', '!=', 'cancelled')->sum('discount') ?? 0;
+
+        $orderStatusBreakdown = Order::select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $topProducts = DB::table('order_items')
+            ->select('product_name', 'product_brand', DB::raw('COALESCE(SUM(quantity), 0) as total_sold'), DB::raw('COALESCE(SUM(product_price * quantity), 0) as revenue'))
+            ->groupBy('product_name', 'product_brand')
+            ->orderByDesc('total_sold')
+            ->limit(10)
+            ->get();
+
+        $dailyRevenue = Order::select(
+            DB::raw("DATE(created_at) as day"),
+            DB::raw('COALESCE(SUM(total), 0) as revenue'),
+            DB::raw('COUNT(*) as orders')
+        )
+            ->where('status', '!=', 'cancelled')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $userGrowth = User::select(
+            DB::raw("DATE(created_at) as day"),
+            DB::raw('COUNT(*) as count')
+        )
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
 
         $sortLabels = [
             'number_desc' => 'Number',
@@ -128,6 +165,18 @@ class DashboardController extends Controller
         $promoRevenueEarned = (float) $promoOrders->clone()->sum('total');
         $promoRevenueLost = (float) $promoOrders->clone()->sum('discount');
         $promoTotalUses = (int) $promoOrders->clone()->count();
+
+        $promotionOrderStats = Order::select(
+            'promotion_id',
+            DB::raw('COALESCE(SUM(total), 0) as revenue'),
+            DB::raw('COALESCE(SUM(discount), 0) as discount'),
+            DB::raw('COUNT(*) as uses')
+        )
+            ->whereNotNull('promotion_id')
+            ->where('status', '!=', 'cancelled')
+            ->groupBy('promotion_id')
+            ->get()
+            ->keyBy('promotion_id');
 
         // Announcements
         $announcementStatus = $request->get('status', '');
@@ -163,10 +212,62 @@ class DashboardController extends Controller
             'announcements',
             'allPromotions',
             'promotionChartData',
+            'promotionOrderStats',
             'promoRevenueEarned',
             'promoRevenueLost',
-            'promoTotalUses'
+            'promoTotalUses',
+            'reportTotalRevenue',
+            'reportTotalOrders',
+            'reportAvgOrderValue',
+            'reportTotalDiscounts',
+            'orderStatusBreakdown',
+            'topProducts',
+            'dailyRevenue',
+            'userGrowth'
         ));
+    }
+
+    public function ordersData(): JsonResponse
+    {
+        $totalOrders = Order::count();
+        $totalRevenue = Order::where('status', '!=', 'cancelled')->sum('total') ?? 0;
+
+        $recentOrders = Order::with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'customer' => $order->user->full_name ?? 'Guest',
+                    'total' => (float) $order->total,
+                    'status' => $order->status,
+                    'date' => $order->created_at->format('M d, Y'),
+                ];
+            });
+
+        $allOrders = Order::with(['user', 'promotion'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'customer' => $order->user->full_name ?? 'Guest',
+                    'total' => (float) $order->total,
+                    'discount' => (float) $order->discount,
+                    'promo' => $order->promotion->code ?? null,
+                    'status' => $order->status,
+                    'shipping' => $order->shipping_mode ?? 'Standard',
+                    'datetime' => $order->created_at->format('M d, Y H:i'),
+                ];
+            });
+
+        return response()->json([
+            'totalOrders' => $totalOrders,
+            'totalRevenue' => (float) $totalRevenue,
+            'recentOrders' => $recentOrders,
+            'allOrders' => $allOrders,
+        ]);
     }
 
     private function updateOrderStatus(Request $request): RedirectResponse

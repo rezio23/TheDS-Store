@@ -122,17 +122,17 @@
                 @endif
 
                 @if ($promoCode && $discount > 0)
-                    <div class="shipping-promo" style="grid-template-columns: 1fr auto;align-items:center;">
-                        <span style="font-size:0.75rem;color:var(--accent);font-weight:600;"><i data-lucide="tag" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i> {{ strtoupper($promoCode) }}</span>
-                        <form method="post" action="{{ route('remove-promo') }}" style="display:inline;">
+                    <div class="shipping-promo">
+                        <span class="shipping-promo-code"><i data-lucide="tag"></i> {{ strtoupper($promoCode) }}</span>
+                        <form method="post" action="{{ route('remove-promo') }}">
                             @csrf
-                            <button type="submit" style="background:transparent;color:#c00;border:none;font-size:0.65rem;cursor:pointer;text-decoration:underline;">Remove</button>
+                            <button type="submit" class="shipping-promo-remove">Remove</button>
                         </form>
                     </div>
                 @else
                     <form method="post" action="{{ route('apply-promo') }}" class="shipping-promo">
                         @csrf
-                        <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}" required>
+                        <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}">
                         <button type="submit">Apply</button>
                     </form>
                 @endif

@@ -60,6 +60,7 @@ Route::post('/admin/logout', [\App\Http\Controllers\Admin\AuthController::class,
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
     Route::post('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index']);
+    Route::get('/dashboard/orders-data', [\App\Http\Controllers\Admin\DashboardController::class, 'ordersData'])->name('admin.orders.data');
 });
 
 require __DIR__.'/auth.php';
