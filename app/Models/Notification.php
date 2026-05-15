@@ -16,6 +16,7 @@ class Notification extends Model
         'message',
         'type',
         'link',
+        'image',
         'read_at',
     ];
 

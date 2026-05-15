@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Promotion;
+use App\Models\Notification;
 use App\Models\User;
 use App\Models\UserRequest;
 use Illuminate\Http\RedirectResponse;
@@ -460,6 +461,12 @@ class DashboardController extends Controller
         $subject = $data['subject'];
         $message = $data['message'];
 
+        // Store attachment if present
+        $imagePath = null;
+        if ($request->hasFile('attachment') && $request->file('attachment')->isValid()) {
+            $imagePath = $request->file('attachment')->store('announcements', 'public');
+        }
+
         // Get all user emails
         $emails = User::whereNotNull('email')->where('email', '!=', '')->pluck('email')->toArray();
         $sentCount = 0;
@@ -487,12 +494,33 @@ class DashboardController extends Controller
             'id' => 'ann_' . uniqid('', true),
             'subject' => $subject,
             'message' => $message,
-            'file' => $request->file('attachment') ? $request->file('attachment')->getClientOriginalName() : '',
+            'file' => $imagePath ? basename($imagePath) : '',
             'sent_count' => $sentCount,
             'total_users' => count($emails),
             'created_at' => now()->format('Y-m-d H:i:s'),
         ];
         file_put_contents($annPath, json_encode($records, JSON_PRETTY_PRINT));
+
+        // Create in-app notifications for all users
+        $userIds = User::whereNotNull('email')->where('email', '!=', '')->pluck('id')->toArray();
+        $now = now();
+        $notifications = array_map(function ($userId) use ($subject, $message, $imagePath, $now) {
+            return [
+                'user_id' => $userId,
+                'title' => $subject,
+                'message' => $message,
+                'type' => 'announcement',
+                'link' => null,
+                'image' => $imagePath,
+                'read_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }, $userIds);
+
+        if (!empty($notifications)) {
+            Notification::insert($notifications);
+        }
 
         $status = 'success:' . $sentCount;
         return redirect()->route('admin.dashboard', ['tab' => 'announcements', 'status' => $status]);
