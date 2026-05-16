@@ -17,10 +17,15 @@
         </div>
 
         @if ($errors->any())
-            <div class="form-errors" style="max-width: 800px; margin: 1rem auto; color: #c00; background: #ffeaea; padding: 1rem; border-radius: 8px;">
-                @foreach ($errors->all() as $error)
-                    <p>{{ $error }}</p>
-                @endforeach
+            <div class="form-errors" style="max-width: 800px; margin: 1rem auto; background: #fff; border: 1px solid #e0e0e0; border-left: 4px solid #e63946; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:#fdeaea;border-radius:50%;flex-shrink:0;margin-top:2px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </span>
+                <div style="flex:1;">
+                    @foreach ($errors->all() as $error)
+                        <p style="margin:0.15rem 0;color:#1a1a1a;font-size:0.9rem;">{{ $error }}</p>
+                    @endforeach
+                </div>
             </div>
         @endif
 
@@ -115,10 +120,20 @@
                 </div>
 
                 @if (session('promo_error'))
-                    <div style="color:#c00;background:#ffeaea;padding:10px 14px;border-radius:8px;font-size:0.75rem;margin-bottom:12px;">{{ session('promo_error') }}</div>
+                    <div style="background:#fff;border:1px solid #e0e0e0;border-left:4px solid #e63946;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:0.6rem;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:12px;">
+                        <span style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;background:#fdeaea;border-radius:50%;flex-shrink:0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </span>
+                        <span style="color:#1a1a1a;font-size:0.8rem;">{{ session('promo_error') }}</span>
+                    </div>
                 @endif
                 @if (session('promo_success'))
-                    <div style="color:#228b22;background:rgba(34,139,34,0.08);padding:10px 14px;border-radius:8px;font-size:0.75rem;margin-bottom:12px;">{{ session('promo_success') }}</div>
+                    <div style="background:#fff;border:1px solid #e0e0e0;border-left:4px solid #2a9d8f;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:0.6rem;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:12px;">
+                        <span style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;background:#e6f4f1;border-radius:50%;flex-shrink:0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a9d8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </span>
+                        <span style="color:#1a1a1a;font-size:0.8rem;">{{ session('promo_success') }}</span>
+                    </div>
                 @endif
 
                 @if ($promoCode && $discount > 0)

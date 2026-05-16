@@ -12,10 +12,15 @@
                 @csrf
 
                 @if ($errors->any())
-                    <div class="auth-errors" style="color: #e63946; margin-bottom: 1rem; font-size: 0.9rem;">
-                        @foreach ($errors->all() as $error)
-                            <p style="margin: 0.25rem 0;">{{ $error }}</p>
-                        @endforeach
+                    <div style="margin-bottom: 1rem; background: #fff; border: 1px solid #e0e0e0; border-left: 4px solid #e63946; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                        <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:#fdeaea;border-radius:50%;flex-shrink:0;margin-top:2px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </span>
+                        <div style="flex:1;">
+                            @foreach ($errors->all() as $error)
+                                <p style="margin: 0.15rem 0; color: #1a1a1a; font-size: 0.9rem;">{{ $error }}</p>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
 

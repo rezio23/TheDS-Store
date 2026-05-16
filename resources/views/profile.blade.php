@@ -6,9 +6,18 @@
 @section('content')
     <main class="profile-main">
         @if (request('ordered'))
-            <div class="form-success" style="grid-column: 1 / -1; max-width: 800px; margin: 0 auto 1rem; color: #070; background: #eaffea; padding: 1rem; border-radius: 8px; text-align: center;">
-                <p>Your order has been placed successfully!</p>
+            <div id="order-success" style="grid-column: 1 / -1; max-width: 800px; margin: 0 auto 1rem; background: #fff; border: 1px solid #e0e0e0; border-left: 4px solid #2a9d8f; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); opacity: 1; transition: opacity 0.5s ease;">
+                <span style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #e6f4f1; border-radius: 50%; flex-shrink: 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2a9d8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
+                <p style="margin: 0; color: #1a1a1a; font-size: 0.95rem; font-weight: 500;">Your order has been placed successfully!</p>
             </div>
+            <script>
+                setTimeout(function() {
+                    var el = document.getElementById('order-success');
+                    if (el) { el.style.opacity = '0'; setTimeout(function(){ el.style.display = 'none'; }, 500); }
+                }, 3000);
+            </script>
         @endif
 
         <aside class="profile-sidebar" aria-label="Profile summary">
@@ -244,10 +253,15 @@
             <form class="edit-form" method="POST" action="{{ route('profile') }}" enctype="multipart/form-data">
                 @csrf
                 @if ($errors->any())
-                    <div class="auth-errors" style="color: #e63946; margin-bottom: 1rem; font-size: 0.9rem;">
-                        @foreach ($errors->all() as $error)
-                            <p style="margin: 0.25rem 0;">{{ $error }}</p>
-                        @endforeach
+                    <div style="margin-bottom: 1rem; background: #fff; border: 1px solid #e0e0e0; border-left: 4px solid #e63946; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                        <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:#fdeaea;border-radius:50%;flex-shrink:0;margin-top:2px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </span>
+                        <div style="flex:1;">
+                            @foreach ($errors->all() as $error)
+                                <p style="margin: 0.15rem 0; color: #1a1a1a; font-size: 0.9rem;">{{ $error }}</p>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
                 <div class="edit-form-group">
