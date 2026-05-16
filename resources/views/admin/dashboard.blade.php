@@ -224,8 +224,7 @@
                                 <td>{{ $order->shipping_mode ?? 'Standard' }}</td>
                                 <td>{{ $order->created_at->format('M d, Y H:i') }}</td>
                                 <td>
-                                    <div style="display:flex;gap:0.5rem;align-items:center;">
-                                        <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-discount="{{ $order->discount }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
+                                    <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-start;">
                                         <form method="post" action="{{ route('admin.dashboard') }}?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">
                                             @csrf
                                             <input type="hidden" name="order_id" value="{{ $order->id }}">
@@ -243,6 +242,7 @@
                                             </div>
                                             <button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>
                                         </form>
+                                        <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-discount="{{ $order->discount }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
                                     </div>
                                 </td>
                             </tr>
@@ -273,15 +273,15 @@
                     <div class="admin-form-grid">
                         <div class="admin-form-group">
                             <label for="prod-name">Name</label>
-                            <input type="text" id="prod-name" name="name" required>
+                            <input type="text" id="prod-name" name="name" required minlength="2" maxlength="255">
                         </div>
                         <div class="admin-form-group">
                             <label for="prod-brand">Brand</label>
-                            <input type="text" id="prod-brand" name="brand" required>
+                            <input type="text" id="prod-brand" name="brand" required minlength="2" maxlength="255">
                         </div>
                         <div class="admin-form-group">
                             <label for="prod-price">Price</label>
-                            <input type="number" id="prod-price" name="price" step="0.01" min="0.01" required>
+                            <input type="number" id="prod-price" name="price" step="0.01" min="0.01" max="999999.99" required>
                         </div>
                         <div class="admin-form-group">
                             <label>Category</label>
@@ -301,15 +301,15 @@
                         </div>
                         <div class="admin-form-group">
                             <label for="prod-badge">Badge</label>
-                            <input type="text" id="prod-badge" name="badge" placeholder="e.g. New, Sale">
+                            <input type="text" id="prod-badge" name="badge" placeholder="e.g. New, Sale" maxlength="255">
                         </div>
                         <div class="admin-form-group">
                             <label for="prod-rating">Rating</label>
-                            <input type="text" id="prod-rating" name="rating" placeholder="e.g. 4.5">
+                            <input type="text" id="prod-rating" name="rating" placeholder="e.g. 4.5" maxlength="10" pattern="[0-5](\.[0-9])?" title="Rating from 0 to 5">
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label for="prod-image">Image URL</label>
-                            <input type="url" id="prod-image" name="image" placeholder="https://example.com/image.png" required>
+                            <input type="url" id="prod-image" name="image" placeholder="https://example.com/image.png" required maxlength="2000">
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label>Gallery Images</label>
@@ -326,11 +326,11 @@
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label for="prod-tags">Tags (comma-separated)</label>
-                            <input type="text" id="prod-tags" name="tags" placeholder="e.g. sneaker, man, popular">
+                            <input type="text" id="prod-tags" name="tags" placeholder="e.g. sneaker, man, popular" maxlength="500">
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label for="prod-description">Description</label>
-                            <textarea id="prod-description" name="description" rows="3"></textarea>
+                            <textarea id="prod-description" name="description" rows="3" maxlength="2000"></textarea>
                         </div>
                     </div>
                     <div class="admin-form-actions">
@@ -372,7 +372,7 @@
                             <div style="display:flex;gap:10px;align-items:flex-end;">
                                 <div class="admin-form-group" style="flex:1;">
                                     <label for="category-name">Category Name</label>
-                                    <input type="text" id="category-name" name="category_name" placeholder="e.g. Sneakers" required>
+                                    <input type="text" id="category-name" name="category_name" placeholder="e.g. Sneakers" required minlength="2" maxlength="255">
                                 </div>
                                 <button type="submit" name="add_category" class="admin-btn">Add</button>
                             </div>
@@ -584,15 +584,15 @@
                         <div class="admin-form-grid" style="grid-template-columns: 1fr 1fr; margin-top: 18px;">
                             <div class="admin-form-group">
                                 <label>Name</label>
-                                <input type="text" name="name" id="pe-name" required>
+                                <input type="text" name="name" id="pe-name" required minlength="2" maxlength="255">
                             </div>
                             <div class="admin-form-group">
                                 <label>Brand</label>
-                                <input type="text" name="brand" id="pe-brand" required>
+                                <input type="text" name="brand" id="pe-brand" required minlength="2" maxlength="255">
                             </div>
                             <div class="admin-form-group">
                                 <label>Price</label>
-                                <input type="number" name="price" id="pe-price" step="0.01" min="0.01" required>
+                                <input type="number" name="price" id="pe-price" step="0.01" min="0.01" max="999999.99" required>
                             </div>
                             <div class="admin-form-group">
                                 <label>Stock</label>
@@ -616,27 +616,27 @@
                             </div>
                             <div class="admin-form-group">
                                 <label>Badge</label>
-                                <input type="text" name="badge" id="pe-badge" placeholder="e.g. New, Sale">
+                                <input type="text" name="badge" id="pe-badge" placeholder="e.g. New, Sale" maxlength="255">
                             </div>
                             <div class="admin-form-group">
                                 <label>Rating</label>
-                                <input type="text" name="rating" id="pe-rating" placeholder="e.g. 4.5">
+                                <input type="text" name="rating" id="pe-rating" placeholder="e.g. 4.5" maxlength="10" pattern="[0-5](\.[0-9])?" title="Rating from 0 to 5">
                             </div>
                             <div class="admin-form-group admin-form-group--full">
                                 <label>Image URL</label>
-                                <input type="url" name="image" id="pe-image" required>
+                                <input type="url" name="image" id="pe-image" required maxlength="2000">
                             </div>
                             <div class="admin-form-group admin-form-group--full">
                                 <label>Gallery Images (pipe-separated URLs)</label>
-                                <input type="text" name="gallery" id="pe-gallery" placeholder="https://example.com/1.png|https://example.com/2.png">
+                                <input type="text" name="gallery" id="pe-gallery" placeholder="https://example.com/1.png|https://example.com/2.png" maxlength="2000">
                             </div>
                             <div class="admin-form-group admin-form-group--full">
                                 <label>Tags (comma-separated)</label>
-                                <input type="text" name="tags" id="pe-tags" placeholder="e.g. sneaker, man, popular">
+                                <input type="text" name="tags" id="pe-tags" placeholder="e.g. sneaker, man, popular" maxlength="500">
                             </div>
                             <div class="admin-form-group admin-form-group--full">
                                 <label>Description</label>
-                                <textarea name="description" id="pe-description" rows="3"></textarea>
+                                <textarea name="description" id="pe-description" rows="3" maxlength="2000"></textarea>
                             </div>
                         </div>
                         <div class="admin-form-actions" style="margin-top: 18px;">
@@ -954,11 +954,11 @@
                     <div class="admin-form-grid">
                         <div class="admin-form-group admin-form-group--full">
                             <label for="ann-subject">Subject</label>
-                            <input type="text" id="ann-subject" name="subject" placeholder="e.g. New Collection Launch" maxlength="120" required>
+                            <input type="text" id="ann-subject" name="subject" placeholder="e.g. New Collection Launch" maxlength="120" minlength="2" required>
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label for="ann-message">Message</label>
-                            <textarea id="ann-message" name="message" rows="6" placeholder="Write your announcement here..." maxlength="2000" required></textarea>
+                            <textarea id="ann-message" name="message" rows="6" placeholder="Write your announcement here..." maxlength="2000" minlength="10" required></textarea>
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label class="help-request-form__label" for="ann-file">Attachment (optional)</label>
@@ -1022,7 +1022,7 @@
                     <div class="admin-form-grid">
                         <div class="admin-form-group">
                             <label for="promo-code">Promo Code</label>
-                            <input type="text" id="promo-code" name="code" placeholder="e.g. SUMMER25" required>
+                            <input type="text" id="promo-code" name="code" placeholder="e.g. SUMMER25" required minlength="2" maxlength="255" pattern="[A-Za-z0-9]+" title="Letters and numbers only">
                         </div>
                         <div class="admin-form-group">
                             <label>Discount Type</label>
@@ -1040,15 +1040,15 @@
                         </div>
                         <div class="admin-form-group">
                             <label for="promo-value">Discount Value</label>
-                            <input type="number" id="promo-value" name="value" step="0.01" min="0" placeholder="e.g. 25 for 25% or $25" required>
+                            <input type="number" id="promo-value" name="value" step="0.01" min="0.01" max="999999.99" placeholder="e.g. 25 for 25% or $25" required>
                         </div>
                         <div class="admin-form-group">
                             <label for="promo-min-order">Minimum Order ($)</label>
-                            <input type="number" id="promo-min-order" name="min_order" step="0.01" min="0" placeholder="Optional">
+                            <input type="number" id="promo-min-order" name="min_order" step="0.01" min="0" max="999999.99" placeholder="Optional">
                         </div>
                         <div class="admin-form-group">
                             <label for="promo-max-uses">Max Uses</label>
-                            <input type="number" id="promo-max-uses" name="max_uses" min="1" placeholder="Optional">
+                            <input type="number" id="promo-max-uses" name="max_uses" min="1" max="999999" placeholder="Optional">
                         </div>
                         <div class="admin-form-group">
                             <label for="promo-starts">Starts At</label>
@@ -1876,12 +1876,13 @@
             '<td>' + shipping + '</td>' +
             '<td>' + escapeHtml(order.datetime) + '</td>' +
             '<td>' +
-                '<div style="display:flex;gap:0.5rem;align-items:center;">' +
-                    '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-discount="' + (order.discount || 0) + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.datetime) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
-                        'View' +
-                    '</button>' +
+                '<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-start;">' +
                     '<form method="post" action="' + adminUrl + '?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">' +
-                        '<input type="hidden" name="_token" value="' + csrfToken + '">' +
+
+
+
+
+                    '<input type="hidden" name="_token" value="' + csrfToken + '">' +
                         '<input type="hidden" name="order_id" value="' + order.id + '">' +
                         '<div class="admin-select-control" data-admin-select>' +
                             '<button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="order-status-' + order.id + '">' +
@@ -1895,6 +1896,9 @@
                         '</div>' +
                         '<button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>' +
                     '</form>' +
+                    '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-discount="' + (order.discount || 0) + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.datetime) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
+                        'View' +
+                    '</button>' +
                 '</div>' +
             '</td>' +
         '</tr>';

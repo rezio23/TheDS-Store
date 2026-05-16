@@ -14,10 +14,12 @@ class ChatController extends Controller
             return response()->json(['error' => 'Invalid CSRF token.'], 403);
         }
 
-        $message = trim($request->input('message', ''));
-        if ($message === '') {
-            return response()->json(['error' => 'Message is required.'], 400);
-        }
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'min:1', 'max:500'],
+            'csrf_token' => ['required', 'string'],
+        ]);
+
+        $message = $validated['message'];
 
         $apiKey = env('AI_API_KEY', '');
         if ($apiKey === '') {

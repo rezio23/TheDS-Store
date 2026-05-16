@@ -71,55 +71,44 @@ class PageController extends Controller
         $requestError = '';
 
         if ($request->isMethod('post') && $request->has('personal_request')) {
-            $requestText = trim($request->input('request_text', ''));
-            $requestEmail = trim($request->input('request_email', ''));
-            $requestPhone = trim($request->input('request_phone', ''));
-            $requestSubject = trim($request->input('request_subject', ''));
+            $validated = $request->validate([
+                'request_email' => ['required', 'email', 'max:255'],
+                'request_phone' => ['required', 'string', 'min:7', 'max:20', 'regex:/^[\d\s\-\+\(\)]+$/'],
+                'request_subject' => ['required', 'string', 'min:2', 'max:120'],
+                'request_text' => ['required', 'string', 'min:10', 'max:2000'],
+                'request_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,pdf,txt', 'max:5120'],
+            ]);
 
-            if ($requestSubject === '') {
-                $requestError = 'Please enter a subject.';
-            } elseif ($requestText === '') {
-                $requestError = 'Please describe your request.';
-            } elseif ($requestEmail === '' || !filter_var($requestEmail, FILTER_VALIDATE_EMAIL)) {
-                $requestError = 'Please enter a valid email address.';
-            } elseif ($requestPhone === '') {
-                $requestError = 'Please enter your phone number.';
-            } else {
-                $uploadDir = storage_path('app/public/uploads/support');
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
-                }
+            $requestText = $validated['request_text'];
+            $requestEmail = $validated['request_email'];
+            $requestPhone = $validated['request_phone'];
+            $requestSubject = $validated['request_subject'];
 
-                $uploadedFile = null;
-                if ($request->hasFile('request_file') && $request->file('request_file')->isValid()) {
-                    $file = $request->file('request_file');
-                    $mimeType = $file->getMimeType();
-                    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'text/plain'];
-
-                    if (in_array($mimeType, $allowedTypes, true)) {
-                        $originalName = $file->getClientOriginalName();
-                        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalName);
-                        $safeName = time() . '_' . $safeName;
-                        $file->move($uploadDir, $safeName);
-                        $uploadedFile = 'uploads/support/' . $safeName;
-                    } else {
-                        $requestError = 'Invalid file type or upload failed.';
-                    }
-                }
-
-                if ($requestError === '') {
-                    UserRequest::create([
-                        'user_id' => auth()->id(),
-                        'phone' => $requestPhone,
-                        'email' => $requestEmail,
-                        'subject' => $requestSubject,
-                        'message' => $requestText,
-                        'attachment' => $uploadedFile,
-                        'status' => 'pending',
-                    ]);
-                    $requestSuccess = true;
-                }
+            $uploadDir = storage_path('app/public/uploads/support');
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
             }
+
+            $uploadedFile = null;
+            if ($request->hasFile('request_file') && $request->file('request_file')->isValid()) {
+                $file = $request->file('request_file');
+                $originalName = $file->getClientOriginalName();
+                $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalName);
+                $safeName = time() . '_' . $safeName;
+                $file->move($uploadDir, $safeName);
+                $uploadedFile = 'uploads/support/' . $safeName;
+            }
+
+            UserRequest::create([
+                'user_id' => auth()->id(),
+                'phone' => $requestPhone,
+                'email' => $requestEmail,
+                'subject' => $requestSubject,
+                'message' => $requestText,
+                'attachment' => $uploadedFile,
+                'status' => 'pending',
+            ]);
+            $requestSuccess = true;
         }
 
         $helpFaqs = [

@@ -57,23 +57,23 @@
                             <div class="payment-card-form">
                                 <div class="payment-form-group payment-form-group--wide">
                                     <label for="card-number">Card Number</label>
-                                    <input type="text" id="card-number" name="card_number" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric">
+                                    <input type="text" id="card-number" name="card_number" placeholder="0000 0000 0000 0000" maxlength="19" minlength="13" inputmode="numeric" pattern="[\d\s]+" title="Enter a valid card number" autocomplete="cc-number">
                                 </div>
 
                                 <div class="payment-form-row">
                                     <div class="payment-form-group">
                                         <label for="card-expiry">Expiry Date</label>
-                                        <input type="text" id="card-expiry" name="card_expiry" placeholder="MM / YY" maxlength="7" inputmode="numeric">
+                                        <input type="text" id="card-expiry" name="card_expiry" placeholder="MM / YY" maxlength="7" minlength="7" inputmode="numeric" pattern="(0[1-9]|1[0-2])\s\/\s\d{2}" title="Format: MM / YY" autocomplete="cc-exp">
                                     </div>
                                     <div class="payment-form-group">
                                         <label for="card-cvc">CVC</label>
-                                        <input type="text" id="card-cvc" name="card_cvc" placeholder="123" maxlength="4" inputmode="numeric">
+                                        <input type="text" id="card-cvc" name="card_cvc" placeholder="123" maxlength="4" minlength="3" inputmode="numeric" pattern="\d{3,4}" title="3 or 4 digit CVC" autocomplete="cc-csc">
                                     </div>
                                 </div>
 
                                 <div class="payment-form-group payment-form-group--wide">
                                     <label for="card-name">Cardholder Name</label>
-                                    <input type="text" id="card-name" name="card_name" placeholder="Name on card">
+                                    <input type="text" id="card-name" name="card_name" placeholder="Name on card" minlength="2" maxlength="255" pattern="[\pL\s\-\'\.]+" title="Enter the cardholder name" autocomplete="cc-name">
                                 </div>
                             </div>
                         </div>
@@ -118,7 +118,7 @@
                 @else
                     <form method="post" action="{{ route('apply-promo') }}" class="payment-promo">
                         @csrf
-                        <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}">
+                        <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}" maxlength="255">
                         <button type="submit">Apply</button>
                     </form>
                 @endif

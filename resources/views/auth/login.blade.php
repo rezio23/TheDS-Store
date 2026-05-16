@@ -20,12 +20,12 @@
 
         <div class="edit-form-group">
             <label class="edit-form-label" for="login-email">Email</label>
-            <input class="edit-form-input" id="login-email" name="email" type="email" value="{{ old('email') }}" placeholder="e.g. sombath@gmail.com" required autofocus>
+            <input class="edit-form-input" id="login-email" name="email" type="email" value="{{ old('email') }}" placeholder="e.g. sombath@gmail.com" required autofocus autocomplete="email" maxlength="255">
         </div>
 
         <div class="edit-form-group">
             <label class="edit-form-label" for="login-password">Password</label>
-            <input class="edit-form-input" id="login-password" name="password" type="password" placeholder="Enter your password" required>
+            <input class="edit-form-input" id="login-password" name="password" type="password" placeholder="Enter your password" required minlength="8" autocomplete="current-password">
         </div>
 
         <div class="edit-form-group" style="display:flex; flex-direction:row; align-items:center; gap:0.5rem; margin-top:0.25rem;">

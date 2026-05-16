@@ -21,12 +21,12 @@
 
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="edit-full-name">Full name</label>
-                    <input class="edit-form-input" id="edit-full-name" name="full_name" type="text" value="{{ old('full_name', $user->full_name) }}" placeholder="e.g. John Smith">
+                    <input class="edit-form-input" id="edit-full-name" name="full_name" type="text" value="{{ old('full_name', $user->full_name) }}" placeholder="e.g. John Smith" required minlength="2" maxlength="255" autocomplete="name">
                 </div>
 
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="edit-username">Username</label>
-                    <input class="edit-form-input" id="edit-username" name="username" type="text" value="{{ '@' . strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}" placeholder="e.g. johnsmith123">
+                    <input class="edit-form-input" id="edit-username" name="username" type="text" value="{{ '@' . strtolower(preg_replace('/[^a-z0-9]/', '', $user->full_name)) }}" placeholder="e.g. johnsmith123" minlength="3" maxlength="50" pattern="[a-zA-Z0-9_]+" title="Letters, numbers and underscores only">
                 </div>
 
                 <div class="edit-form-group">
@@ -49,12 +49,12 @@
 
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="edit-address">Address</label>
-                    <input class="edit-form-input" id="edit-address" name="address" type="text" value="{{ old('address', $user->address) }}" placeholder="e.g. Toul Kork, Cambodia">
+                    <input class="edit-form-input" id="edit-address" name="address" type="text" value="{{ old('address', $user->address) }}" placeholder="e.g. Toul Kork, Cambodia" minlength="5" maxlength="255" autocomplete="street-address">
                 </div>
 
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="edit-phone">Phone</label>
-                    <input class="edit-form-input" id="edit-phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}" placeholder="e.g. 85511 223 344">
+                    <input class="edit-form-input" id="edit-phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}" placeholder="e.g. 85511 223 344" minlength="7" maxlength="20" pattern="[\d\s\-\+\(\)]+" title="Enter a valid phone number" autocomplete="tel">
                 </div>
 
                 <div class="edit-form-actions">

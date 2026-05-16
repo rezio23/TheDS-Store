@@ -46,7 +46,7 @@ $searchId = match ($headerId) {
         @if(request()->is('/') || request()->routeIs('shop'))
         <div class="header-search" data-header-search>
             <div class="header-search-field">
-                <input class="header-search-input" id="{{ $searchId }}" data-product-search type="search" placeholder="Search products..." aria-label="Search products" autocomplete="off" tabindex="-1" aria-hidden="true">
+                <input class="header-search-input" id="{{ $searchId }}" data-product-search type="search" placeholder="Search products..." aria-label="Search products" autocomplete="off" tabindex="-1" aria-hidden="true" maxlength="100">
                 <div class="header-search-results" data-header-search-results hidden></div>
             </div>
             <button class="icon-button search-trigger" type="button" aria-label="Open search" aria-controls="{{ $searchId }}" aria-expanded="false" title="Search">

@@ -17,22 +17,22 @@
 
         <div class="edit-form-group">
             <label class="edit-form-label" for="signup-full-name">Full name</label>
-            <input class="edit-form-input" id="signup-full-name" name="full_name" type="text" value="{{ old('full_name') }}" placeholder="e.g. John Smith" required autofocus>
+            <input class="edit-form-input" id="signup-full-name" name="full_name" type="text" value="{{ old('full_name') }}" placeholder="e.g. John Smith" required autofocus autocomplete="name" minlength="2" maxlength="255">
         </div>
 
         <div class="edit-form-group">
             <label class="edit-form-label" for="signup-email">Email</label>
-            <input class="edit-form-input" id="signup-email" name="email" type="email" value="{{ old('email') }}" placeholder="e.g. sombath@gmail.com" required>
+            <input class="edit-form-input" id="signup-email" name="email" type="email" value="{{ old('email') }}" placeholder="e.g. sombath@gmail.com" required autocomplete="email" maxlength="255">
         </div>
 
         <div class="edit-form-group">
             <label class="edit-form-label" for="signup-password">Password</label>
-            <input class="edit-form-input" id="signup-password" name="password" type="password" placeholder="Create a password" required>
+            <input class="edit-form-input" id="signup-password" name="password" type="password" placeholder="Create a password" required minlength="8" autocomplete="new-password">
         </div>
 
         <div class="edit-form-group">
             <label class="edit-form-label" for="signup-confirm-password">Confirm Password</label>
-            <input class="edit-form-input" id="signup-confirm-password" name="password_confirmation" type="password" placeholder="Confirm your password" required>
+            <input class="edit-form-input" id="signup-confirm-password" name="password_confirmation" type="password" placeholder="Confirm your password" required minlength="8" autocomplete="new-password">
         </div>
 
         <div class="edit-form-actions">

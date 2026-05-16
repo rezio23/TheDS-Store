@@ -130,7 +130,7 @@
 
         <div class="search-panel" hidden>
             <label for="product-search">Search collection</label>
-            <input id="product-search" data-product-search type="search" placeholder="Try Nike, bag, puffer...">
+            <input id="product-search" data-product-search type="search" placeholder="Try Nike, bag, puffer..." maxlength="100">
         </div>
 
         <div class="products-panel">

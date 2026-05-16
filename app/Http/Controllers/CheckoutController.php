@@ -60,14 +60,14 @@ class CheckoutController extends Controller
     public function storeShipping(Request $request)
     {
         $request->validate([
-            'full_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:50',
-            'address_1' => 'required|string|max:255',
-            'address_2' => 'nullable|string|max:255',
-            'postal_code' => 'required|string|max:20',
-            'email' => 'required|email|max:255',
-            'description' => 'nullable|string|max:500',
-            'shipping_mode' => 'required|string|in:standard,fast',
+            'full_name' => ['required', 'string', 'min:2', 'max:255', 'regex:/^[\pL\s\-\'\.]+$/u'],
+            'phone' => ['required', 'string', 'min:7', 'max:20', 'regex:/^[\d\s\-\+\(\)]+$/'],
+            'address_1' => ['required', 'string', 'min:5', 'max:255'],
+            'address_2' => ['nullable', 'string', 'max:255'],
+            'postal_code' => ['required', 'string', 'max:20', 'regex:/^[A-Za-z0-9\s\-]+$/'],
+            'email' => ['required', 'email', 'max:255'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'shipping_mode' => ['required', 'string', 'in:standard,fast'],
         ]);
 
         session(['shipping' => $request->only([
@@ -149,8 +149,6 @@ class CheckoutController extends Controller
             return redirect()->route('cart')->with('error', 'Invalid checkout state.');
         }
 
-        $errors = [];
-
         $cardNumber = trim((string) $request->input('card_number', ''));
         $cardExpiry = trim((string) $request->input('card_expiry', ''));
         $cardCvc = trim((string) $request->input('card_cvc', ''));
@@ -160,14 +158,12 @@ class CheckoutController extends Controller
         $paymentMethod = $hasCardFields ? 'debit_card' : 'khqr';
 
         if ($paymentMethod === 'debit_card') {
-            if ($cardNumber === '') $errors[] = 'Card number is required.';
-            if ($cardExpiry === '') $errors[] = 'Expiry date is required.';
-            if ($cardCvc === '') $errors[] = 'CVC is required.';
-            if ($cardName === '') $errors[] = 'Cardholder name is required.';
-        }
-
-        if (!empty($errors)) {
-            return redirect()->route('payment')->withErrors($errors);
+            $request->validate([
+                'card_number' => ['required', 'string', 'min:13', 'max:19', 'regex:/^[\d\s]+$/'],
+                'card_expiry' => ['required', 'string', 'size:7', 'regex:/^(0[1-9]|1[0-2])\s\/\s\d{2}$/'],
+                'card_cvc' => ['required', 'string', 'min:3', 'max:4', 'regex:/^\d+$/'],
+                'card_name' => ['required', 'string', 'min:2', 'max:255', 'regex:/^[\pL\s\-\'\.]+$/u'],
+            ]);
         }
 
         $promoCode = session('promo_code');

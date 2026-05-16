@@ -32,40 +32,40 @@
                     <div class="shipping-form-row">
                         <div class="shipping-form-group">
                             <label for="ship-full-name">Full name</label>
-                            <input type="text" id="ship-full-name" name="full_name" value="{{ old('full_name', $user->full_name ?? '') }}" required>
+                            <input type="text" id="ship-full-name" name="full_name" value="{{ old('full_name', $user->full_name ?? '') }}" minlength="2" maxlength="255" autocomplete="name" required>
                         </div>
                         <div class="shipping-form-group">
                             <label for="ship-phone">Phone</label>
-                            <input type="tel" id="ship-phone" name="phone" value="{{ old('phone', $user->phone ?? '') }}" required>
+                            <input type="tel" id="ship-phone" name="phone" value="{{ old('phone', $user->phone ?? '') }}" minlength="7" maxlength="20" pattern="[\d\s\-\+\(\)]+" title="Enter a valid phone number" autocomplete="tel" required>
                         </div>
                     </div>
 
                     <div class="shipping-form-row">
                         <div class="shipping-form-group">
                             <label for="ship-address-1">Address Line 1</label>
-                            <input type="text" id="ship-address-1" name="address_1" value="{{ old('address_1', $user->address ?? '') }}" required>
+                            <input type="text" id="ship-address-1" name="address_1" value="{{ old('address_1', $user->address ?? '') }}" minlength="5" maxlength="255" autocomplete="address-line1" required>
                         </div>
                         <div class="shipping-form-group">
                             <label for="ship-address-2">Address Line 2</label>
-                            <input type="text" id="ship-address-2" name="address_2" value="{{ old('address_2') }}">
+                            <input type="text" id="ship-address-2" name="address_2" value="{{ old('address_2') }}" maxlength="255" autocomplete="address-line2">
                         </div>
                     </div>
 
                     <div class="shipping-form-row">
                         <div class="shipping-form-group shipping-form-group--wide">
                             <label for="ship-description">Description</label>
-                            <input type="text" id="ship-description" name="description" placeholder="Enter a description...">
+                            <input type="text" id="ship-description" name="description" placeholder="Enter a description..." maxlength="500">
                         </div>
                     </div>
 
                     <div class="shipping-form-row">
                         <div class="shipping-form-group">
                             <label for="ship-postal">Postal Code</label>
-                            <input type="text" id="ship-postal" name="postal_code" value="{{ old('postal_code') }}" required>
+                            <input type="text" id="ship-postal" name="postal_code" value="{{ old('postal_code') }}" maxlength="20" pattern="[A-Za-z0-9\s\-]+" title="Enter a valid postal code" autocomplete="postal-code" required>
                         </div>
                         <div class="shipping-form-group">
                             <label for="ship-email">Email</label>
-                            <input type="email" id="ship-email" name="email" value="{{ old('email', $user->email ?? '') }}" required>
+                            <input type="email" id="ship-email" name="email" value="{{ old('email', $user->email ?? '') }}" maxlength="255" autocomplete="email" required>
                         </div>
                     </div>
 
@@ -132,7 +132,7 @@
                 @else
                     <form method="post" action="{{ route('apply-promo') }}" class="shipping-promo">
                         @csrf
-                        <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}">
+                        <input type="text" name="promo_code" placeholder="Apply Promo Code" aria-label="Promo code" value="{{ old('promo_code') }}" maxlength="255">
                         <button type="submit">Apply</button>
                     </form>
                 @endif

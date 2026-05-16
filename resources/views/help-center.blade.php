@@ -61,7 +61,7 @@
 
             <div class="help-faq-search">
                 <span class="help-faq-search__icon"><i data-lucide="search"></i></span>
-                <input type="search" id="faq-search" placeholder="Search questions..." aria-label="Search FAQs">
+                <input type="search" id="faq-search" placeholder="Search questions..." aria-label="Search FAQs" maxlength="100">
             </div>
 
             <div class="help-faq-list">
@@ -191,19 +191,19 @@
                     @endphp
                     <div class="help-request-form__group">
                         <label class="help-request-form__label" for="request-email">Email</label>
-                        <input class="help-request-form__input" id="request-email" name="request_email" type="email" placeholder="you@example.com" required value="{{ $prefillEmail }}">
+                        <input class="help-request-form__input" id="request-email" name="request_email" type="email" placeholder="you@example.com" required value="{{ $prefillEmail }}" maxlength="255" autocomplete="email">
                     </div>
                     <div class="help-request-form__group">
                         <label class="help-request-form__label" for="request-phone">Phone</label>
-                        <input class="help-request-form__input" id="request-phone" name="request_phone" type="tel" placeholder="+855 112 233" required value="{{ old('request_phone', '') }}">
+                        <input class="help-request-form__input" id="request-phone" name="request_phone" type="tel" placeholder="+855 112 233" required value="{{ old('request_phone', '') }}" minlength="7" maxlength="20" pattern="[\d\s\-\+\(\)]+" title="Enter a valid phone number" autocomplete="tel">
                     </div>
                     <div class="help-request-form__group">
                         <label class="help-request-form__label" for="request-subject">Subject</label>
-                        <input class="help-request-form__input" id="request-subject" name="request_subject" type="text" maxlength="120" placeholder="What is this about?" required value="{{ old('request_subject', '') }}">
+                        <input class="help-request-form__input" id="request-subject" name="request_subject" type="text" maxlength="120" minlength="2" placeholder="What is this about?" required value="{{ old('request_subject', '') }}">
                     </div>
                     <div class="help-request-form__group">
                         <label class="help-request-form__label" for="request-text">Message</label>
-                        <textarea class="help-request-form__textarea" id="request-text" name="request_text" rows="4" maxlength="2000" placeholder="Tell us the details..." required>{{ old('request_text', '') }}</textarea>
+                        <textarea class="help-request-form__textarea" id="request-text" name="request_text" rows="4" maxlength="2000" minlength="10" placeholder="Tell us the details..." required>{{ old('request_text', '') }}</textarea>
                     </div>
                     <div class="help-request-form__group">
                         <label class="help-request-form__label" for="request-file">Attachment (optional)</label>

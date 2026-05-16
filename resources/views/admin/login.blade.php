@@ -165,11 +165,11 @@
                 @endif
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="admin-email">Email</label>
-                    <input class="edit-form-input" id="admin-email" name="email" type="email" placeholder="admin@gmail.com" value="{{ old('email') }}" required>
+                    <input class="edit-form-input" id="admin-email" name="email" type="email" placeholder="admin@gmail.com" value="{{ old('email') }}" required autocomplete="email" maxlength="255">
                 </div>
                 <div class="edit-form-group">
                     <label class="edit-form-label" for="admin-password">Password</label>
-                    <input class="edit-form-input" id="admin-password" name="password" type="password" placeholder="Enter admin password" required>
+                    <input class="edit-form-input" id="admin-password" name="password" type="password" placeholder="Enter admin password" required minlength="8" autocomplete="current-password">
                 </div>
                 <div class="edit-form-actions">
                     <button type="submit" class="edit-form-button edit-form-button--submit edit-form-button--full">Log In</button>
