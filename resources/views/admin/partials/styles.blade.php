@@ -1289,6 +1289,31 @@ button {
     }
 }
 
+.odm-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(192, 107, 0, 0.1);
+}
+.odm-item:last-child {
+    border-bottom: 0;
+}
+.odm-item__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.62rem;
+}
+.odm-item__info strong {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+.odm-item__info span {
+    color: var(--muted);
+}
+
 /* ===== Print styles for Reports ===== */
 @media print {
     @page {

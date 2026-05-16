@@ -138,9 +138,11 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Customer</th>
+                                    <th>Items</th>
                                     <th>Total</th>
                                     <th>Status</th>
                                     <th>Date</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -148,9 +150,13 @@
                                     <tr>
                                         <td>#{{ $order->id }}</td>
                                         <td>{{ $order->user->full_name ?? 'Guest' }}</td>
+                                        <td>{{ $order->items->count() }} item{{ $order->items->count() !== 1 ? 's' : '' }}</td>
                                         <td>${{ number_format($order->total, 2) }}</td>
                                         <td><span class="admin-badge-status status-{{ $order->status }}">{{ ucfirst($order->status) }}</span></td>
                                         <td>{{ $order->created_at->format('M d, Y') }}</td>
+                                        <td>
+                                                <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -195,6 +201,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Customer</th>
+                            <th>Items</th>
                             <th>Total</th>
                             <th>Discount</th>
                             <th>Promo</th>
@@ -209,6 +216,7 @@
                             <tr>
                                 <td>#{{ $order->id }}</td>
                                 <td>{{ $order->user->full_name ?? 'Guest' }}</td>
+                                <td>{{ $order->items->count() }} item{{ $order->items->count() !== 1 ? 's' : '' }}</td>
                                 <td>${{ number_format($order->total, 2) }}</td>
                                 <td>{{ $order->discount > 0 ? '-$' . number_format($order->discount, 2) : '—' }}</td>
                                 <td>{{ $order->promotion->code ?? '—' }}</td>
@@ -216,23 +224,26 @@
                                 <td>{{ $order->shipping_mode ?? 'Standard' }}</td>
                                 <td>{{ $order->created_at->format('M d, Y H:i') }}</td>
                                 <td>
-                                    <form method="post" action="{{ route('admin.dashboard') }}?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">
-                                        @csrf
-                                        <input type="hidden" name="order_id" value="{{ $order->id }}">
-                                        <div class="admin-select-control" data-admin-select>
-                                            <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="order-status-{{ $order->id }}">
-                                                <span data-admin-select-current>{{ ucfirst($order->status) }}</span>
-                                                <i data-lucide="chevron-down"></i>
-                                            </button>
-                                            <div class="admin-select-menu" id="order-status-{{ $order->id }}" role="listbox" data-admin-select-menu>
-                                                @foreach (['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as $s)
-                                                    <button type="button" role="option" data-admin-select-option data-value="{{ $s }}" class="{{ $order->status === $s ? 'is-selected' : '' }}" aria-selected="{{ $order->status === $s ? 'true' : 'false' }}">{{ ucfirst($s) }}</button>
-                                                @endforeach
+                                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                                        <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-discount="{{ $order->discount }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
+                                        <form method="post" action="{{ route('admin.dashboard') }}?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">
+                                            @csrf
+                                            <input type="hidden" name="order_id" value="{{ $order->id }}">
+                                            <div class="admin-select-control" data-admin-select>
+                                                <button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="order-status-{{ $order->id }}">
+                                                    <span data-admin-select-current>{{ ucfirst($order->status) }}</span>
+                                                    <i data-lucide="chevron-down"></i>
+                                                </button>
+                                                <div class="admin-select-menu" id="order-status-{{ $order->id }}" role="listbox" data-admin-select-menu>
+                                                    @foreach (['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as $s)
+                                                        <button type="button" role="option" data-admin-select-option data-value="{{ $s }}" class="{{ $order->status === $s ? 'is-selected' : '' }}" aria-selected="{{ $order->status === $s ? 'true' : 'false' }}">{{ ucfirst($s) }}</button>
+                                                    @endforeach
+                                                </div>
+                                                <input type="hidden" name="status" value="{{ $order->status }}" data-admin-select-input>
                                             </div>
-                                            <input type="hidden" name="status" value="{{ $order->status }}" data-admin-select-input>
-                                        </div>
-                                        <button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>
-                                    </form>
+                                            <button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -1819,16 +1830,24 @@
     function escapeHtml(text) {
         var div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML;
+        return div.innerHTML.replace(/"/g, '&quot;');
     }
 
     function buildRecentOrderRow(order) {
+        var itemCount = (order.items || []).length;
+        var itemsJson = JSON.stringify(order.items || []);
         return '<tr>' +
             '<td>#' + order.id + '</td>' +
             '<td>' + escapeHtml(order.customer) + '</td>' +
+            '<td>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</td>' +
             '<td>$' + formatMoney(order.total) + '</td>' +
             '<td><span class="admin-badge-status status-' + order.status + '">' + order.status.charAt(0).toUpperCase() + order.status.slice(1) + '</span></td>' +
             '<td>' + escapeHtml(order.date) + '</td>' +
+            '<td>' +
+                '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.date) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
+                    'View' +
+                '</button>' +
+            '</td>' +
         '</tr>';
     }
 
@@ -1844,9 +1863,12 @@
         }).join('');
         var statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
 
+        var itemCount = (order.items || []).length;
+        var itemsJson = JSON.stringify(order.items || []);
         return '<tr>' +
             '<td>#' + order.id + '</td>' +
             '<td>' + escapeHtml(order.customer) + '</td>' +
+            '<td>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</td>' +
             '<td>$' + formatMoney(order.total) + '</td>' +
             '<td>' + discount + '</td>' +
             '<td>' + promo + '</td>' +
@@ -1854,21 +1876,26 @@
             '<td>' + shipping + '</td>' +
             '<td>' + escapeHtml(order.datetime) + '</td>' +
             '<td>' +
-                '<form method="post" action="' + adminUrl + '?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">' +
-                    '<input type="hidden" name="_token" value="' + csrfToken + '">' +
-                    '<input type="hidden" name="order_id" value="' + order.id + '">' +
-                    '<div class="admin-select-control" data-admin-select>' +
-                        '<button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="order-status-' + order.id + '">' +
-                            '<span data-admin-select-current>' + statusLabel + '</span>' +
-                            '<i data-lucide="chevron-down"></i>' +
-                        '</button>' +
-                        '<div class="admin-select-menu" id="order-status-' + order.id + '" role="listbox" data-admin-select-menu>' +
-                            optionsHtml +
+                '<div style="display:flex;gap:0.5rem;align-items:center;">' +
+                    '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-discount="' + (order.discount || 0) + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.datetime) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
+                        'View' +
+                    '</button>' +
+                    '<form method="post" action="' + adminUrl + '?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">' +
+                        '<input type="hidden" name="_token" value="' + csrfToken + '">' +
+                        '<input type="hidden" name="order_id" value="' + order.id + '">' +
+                        '<div class="admin-select-control" data-admin-select>' +
+                            '<button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="order-status-' + order.id + '">' +
+                                '<span data-admin-select-current>' + statusLabel + '</span>' +
+                                '<i data-lucide="chevron-down"></i>' +
+                            '</button>' +
+                            '<div class="admin-select-menu" id="order-status-' + order.id + '" role="listbox" data-admin-select-menu>' +
+                                optionsHtml +
+                            '</div>' +
+                            '<input type="hidden" name="status" value="' + order.status + '" data-admin-select-input>' +
                         '</div>' +
-                        '<input type="hidden" name="status" value="' + order.status + '" data-admin-select-input>' +
-                    '</div>' +
-                    '<button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>' +
-                '</form>' +
+                        '<button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>' +
+                    '</form>' +
+                '</div>' +
             '</td>' +
         '</tr>';
     }
@@ -1904,6 +1931,9 @@
         if (typeof lucide !== 'undefined') {
             lucide.createIcons({ nodes: tbody.querySelectorAll('i[data-lucide]') });
         }
+        if (typeof window.bindOrderButtons === 'function') {
+            window.bindOrderButtons(tbody);
+        }
     }
 
     function updateAllOrders(data) {
@@ -1918,6 +1948,9 @@
         }
         if (typeof lucide !== 'undefined') {
             lucide.createIcons({ nodes: tbody.querySelectorAll('i[data-lucide]') });
+        }
+        if (typeof window.bindOrderButtons === 'function') {
+            window.bindOrderButtons(tbody);
         }
     }
 
@@ -1972,6 +2005,123 @@
 
     poll();
     setInterval(poll, pollInterval);
+})();
+</script>
+
+<!-- Order Detail Modal -->
+<div id="order-detail-modal" class="admin-request-overlay">
+    <div class="admin-request-modal" style="width: min(680px, 100%);">
+        <button type="button" class="admin-request-modal__close" onclick="document.getElementById('order-detail-modal').classList.remove('is-open');">
+            <i data-lucide="x"></i>
+        </button>
+
+        <div class="admin-request-modal__head">
+            <span class="req-meta">Order <span id="odm-id"></span></span>
+            <h2 id="odm-customer"></h2>
+        </div>
+
+        <div class="admin-request-modal__body">
+            <div class="admin-request-meta-grid">
+                <div class="meta-item">
+                    <span>Status</span>
+                    <strong id="odm-status"></strong>
+                </div>
+                <div class="meta-item">
+                    <span>Shipping</span>
+                    <strong id="odm-shipping"></strong>
+                </div>
+                <div class="meta-item">
+                    <span>Date</span>
+                    <strong id="odm-date"></strong>
+                </div>
+                <div class="meta-item">
+                    <span>Total</span>
+                    <strong id="odm-total"></strong>
+                </div>
+            </div>
+
+            <h3 style="margin:20px 0 12px;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Ordered Items</h3>
+            <div id="odm-items"></div>
+        </div>
+
+        <div class="admin-request-modal__foot">
+            <button type="button" class="admin-btn" style="background:var(--ink);" onclick="document.getElementById('order-detail-modal').classList.remove('is-open');">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var modal = document.getElementById('order-detail-modal');
+
+    function closeOrderModal() {
+        modal.classList.remove('is-open');
+    }
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeOrderModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+            closeOrderModal();
+        }
+    });
+
+    function formatMoney(n) {
+        return parseFloat(n).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function buildItemRow(item) {
+        var size = item.size ? 'Size: ' + item.size : '';
+        var qty = 'Qty: ' + item.quantity;
+        var meta = [size, qty].filter(Boolean).join(' · ');
+        var img = item.product_image ? '<img src="{{ asset('storage') }}/' + item.product_image + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">' : '<div style="width:48px;height:48px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="package" style="width:20px;height:20px;color:var(--muted);"></i></div>';
+        return '<div class="odm-item">' +
+            img +
+            '<div class="odm-item__info">' +
+                '<strong>' + (item.product_name || 'Product') + '</strong>' +
+                '<span>' + (item.product_brand || '') + (meta ? ' · ' + meta : '') + '</span>' +
+                '<span>$' + formatMoney(item.product_price) + ' each</span>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function openOrderModal(btn) {
+        var id = btn.getAttribute('data-order-id');
+        var customer = btn.getAttribute('data-order-customer');
+        var status = btn.getAttribute('data-order-status');
+        var total = btn.getAttribute('data-order-total');
+        var shipping = btn.getAttribute('data-order-shipping') || 'Standard';
+        var date = btn.getAttribute('data-order-date');
+        var itemsRaw = btn.getAttribute('data-order-items');
+        var items = [];
+        try { items = JSON.parse(itemsRaw || '[]'); } catch (e) { items = []; }
+
+        document.getElementById('odm-id').textContent = '#' + id;
+        document.getElementById('odm-customer').textContent = customer;
+        document.getElementById('odm-status').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        document.getElementById('odm-status').className = 'admin-badge-status status-' + status;
+        document.getElementById('odm-shipping').textContent = shipping;
+        document.getElementById('odm-date').textContent = date;
+        document.getElementById('odm-total').textContent = '$' + formatMoney(total);
+        document.getElementById('odm-items').innerHTML = items.length ? items.map(buildItemRow).join('') : '<p style="color:var(--muted);">No items found.</p>';
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons({ nodes: modal.querySelectorAll('i[data-lucide]') });
+        }
+
+        modal.classList.add('is-open');
+    }
+
+    function bindOrderButtons(root) {
+        root.querySelectorAll('[data-order-view]').forEach(function(btn) {
+            btn.addEventListener('click', function() { openOrderModal(btn); });
+        });
+    }
+
+    bindOrderButtons(document);
+    window.bindOrderButtons = bindOrderButtons;
 })();
 </script>
 

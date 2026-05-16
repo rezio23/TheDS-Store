@@ -77,7 +77,7 @@ class DashboardController extends Controller
             ->get();
 
         // Recent orders
-        $recentOrders = Order::with('user')->orderBy('created_at', 'desc')->limit(5)->get();
+        $recentOrders = Order::with(['user', 'items'])->orderBy('created_at', 'desc')->limit(5)->get();
 
         // Recent users
         $recentUsers = User::orderBy('created_at', 'desc')->limit(5)->get();
@@ -107,7 +107,7 @@ class DashboardController extends Controller
         $allProducts = $productsQuery->get();
 
         // All orders
-        $allOrders = Order::with(['user', 'promotion'])->orderBy('created_at', 'desc')->get();
+        $allOrders = Order::with(['user', 'promotion', 'items'])->orderBy('created_at', 'desc')->get();
 
         $allRequests = UserRequest::with('user')->orderBy('created_at', 'desc')->get();
 
@@ -286,7 +286,7 @@ class DashboardController extends Controller
         $totalOrders = Order::count();
         $totalRevenue = Order::where('status', '!=', 'cancelled')->sum('total') ?? 0;
 
-        $recentOrders = Order::with('user')
+        $recentOrders = Order::with(['user', 'items'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -297,10 +297,20 @@ class DashboardController extends Controller
                     'total' => (float) $order->total,
                     'status' => $order->status,
                     'date' => $order->created_at->format('M d, Y'),
+                    'items' => $order->items->map(function ($item) {
+                        return [
+                            'product_name' => $item->product_name,
+                            'product_brand' => $item->product_brand,
+                            'size' => $item->size,
+                            'quantity' => $item->quantity,
+                            'product_price' => (float) $item->product_price,
+                            'product_image' => $item->product_image,
+                        ];
+                    }),
                 ];
             });
 
-        $allOrders = Order::with(['user', 'promotion'])
+        $allOrders = Order::with(['user', 'promotion', 'items'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($order) {
@@ -313,6 +323,16 @@ class DashboardController extends Controller
                     'status' => $order->status,
                     'shipping' => $order->shipping_mode ?? 'Standard',
                     'datetime' => $order->created_at->format('M d, Y H:i'),
+                    'items' => $order->items->map(function ($item) {
+                        return [
+                            'product_name' => $item->product_name,
+                            'product_brand' => $item->product_brand,
+                            'size' => $item->size,
+                            'quantity' => $item->quantity,
+                            'product_price' => (float) $item->product_price,
+                            'product_image' => $item->product_image,
+                        ];
+                    }),
                 ];
             });
 
