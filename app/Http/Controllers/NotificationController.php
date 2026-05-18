@@ -8,22 +8,32 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
     {
         $user = Auth::user();
         if (!$user) {
-            return response()->json(['notifications' => []]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['notifications' => []]);
+            }
+            return redirect()->route('login');
         }
 
-        $notifications = $user->notifications()
-            ->select('id', 'title', 'message', 'type', 'link', 'read_at', 'created_at')
-            ->limit(20)
-            ->get();
+        $notificationsQuery = $user->notifications()
+            ->select('id', 'title', 'message', 'type', 'link', 'image', 'read_at', 'created_at')
+            ->orderBy('created_at', 'desc');
 
-        return response()->json([
-            'notifications' => $notifications,
-            'unread_count' => $user->unreadNotifications()->count(),
-        ]);
+        if ($request->ajax() || $request->wantsJson()) {
+            $notifications = $notificationsQuery->limit(20)->get();
+
+            return response()->json([
+                'notifications' => $notifications,
+                'unread_count' => $user->unreadNotifications()->count(),
+            ]);
+        }
+
+        $notifications = $notificationsQuery->get();
+
+        return view('notifications', compact('notifications'));
     }
 
     public function markAsRead(int $id): JsonResponse

@@ -10,6 +10,7 @@ $headerId = match (true) {
     request()->routeIs('payment') => 'payment-top',
     request()->routeIs('shipping') => 'shipping-top',
     request()->routeIs('profile') => 'profile-top',
+    request()->routeIs('notifications.index') => 'notifications-top',
     request()->routeIs('help-center') => 'help-top',
     request()->routeIs('terms') => 'terms-top',
     request()->routeIs('product.show') => 'product-top',
@@ -24,6 +25,7 @@ $searchId = match ($headerId) {
     'payment-top' => 'header-payment-search',
     'shipping-top' => 'header-shipping-search',
     'profile-top' => 'header-profile-search',
+    'notifications-top' => 'header-notifications-search',
     'help-top' => 'header-help-search',
     'terms-top' => 'header-terms-search',
     'product-top' => 'header-product-search',
@@ -57,7 +59,7 @@ $searchId = match ($headerId) {
         @auth
             @if(!request()->is('/') && !request()->routeIs('shop'))
             <div class="header-notifications" data-header-notifications>
-                <button class="icon-button notification-trigger {{ request()->routeIs('profile') ? 'is-active' : '' }}" type="button" aria-label="Notifications" aria-controls="header-notification-panel" aria-expanded="false" title="Notifications" data-notification-trigger>
+                <button class="icon-button notification-trigger {{ request()->routeIs('notifications.index') ? 'is-active' : '' }}" type="button" aria-label="Notifications" aria-controls="header-notification-panel" aria-expanded="false" title="Notifications" data-notification-trigger>
                     <i data-lucide="bell"></i>
                     <span class="notification-count" aria-live="polite" data-notification-count hidden>0</span>
                 </button>
@@ -67,7 +69,7 @@ $searchId = match ($headerId) {
                         <button type="button" class="header-notification-mark-all" data-mark-all-read>Mark all as read</button>
                     </div>
                     <div class="header-notification-list" data-notification-list></div>
-                    <a href="{{ route('profile') }}#notifications" class="header-notification-footer">View all</a>
+                    <a href="{{ route('notifications.index') }}" class="header-notification-footer">View all</a>
                 </div>
             </div>
             @endif
