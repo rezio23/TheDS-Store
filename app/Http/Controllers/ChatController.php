@@ -21,9 +21,9 @@ class ChatController extends Controller
 
         $message = $validated['message'];
 
-        $apiKey = env('AI_API_KEY', '');
+        $apiKey = env('GROQ_API_KEY', '');
         if ($apiKey === '') {
-            return response()->json(['error' => 'AI service is not configured. Please add an API key to the environment.'], 503);
+            return response()->json(['error' => 'AI service is not configured. Please add GROQ_API_KEY to the environment.'], 503);
         }
 
         $chatCount = session('chat_count', 0) + 1;
@@ -60,25 +60,27 @@ Guidelines:
 PROMPT;
 
         $payload = [
-            'model' => 'claude-3-5-sonnet-20241022',
+            'model' => 'llama-3.3-70b-versatile',
             'max_tokens' => 512,
-            'system' => $systemPrompt,
-            'messages' => $messages,
+            'temperature' => 0.7,
+            'messages' => array_merge(
+                [['role' => 'system', 'content' => $systemPrompt]],
+                $messages
+            ),
         ];
 
-        $ch = curl_init('https://api.anthropic.com/v1/messages');
+        $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'x-api-key: ' . $apiKey,
-                'anthropic-version: 2023-06-01',
+                'Authorization: Bearer ' . $apiKey,
             ],
             CURLOPT_TIMEOUT => 30,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYPEER => app()->environment('production'),
         ]);
 
         $response = curl_exec($ch);
@@ -92,12 +94,12 @@ PROMPT;
 
         $data = json_decode($response, true);
 
-        if ($httpCode !== 200 || empty($data['content'][0]['text'])) {
+        if ($httpCode !== 200 || empty($data['choices'][0]['message']['content'])) {
             $errorMessage = $data['error']['message'] ?? 'AI service returned an error. Please try again later.';
             return response()->json(['error' => $errorMessage], 502);
         }
 
-        $reply = $data['content'][0]['text'];
+        $reply = $data['choices'][0]['message']['content'];
         $chatHistory[] = ['role' => 'assistant', 'content' => $reply];
         session(['chat_history' => $chatHistory]);
 

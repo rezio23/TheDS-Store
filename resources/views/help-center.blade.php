@@ -300,6 +300,7 @@
             type: 'POST',
             data: { message: message, csrf_token: csrfToken },
             dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
         }).done(function (response) {
             setLoading(false);
             if (response.reply) {

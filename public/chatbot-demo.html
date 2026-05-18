@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The DS — Premium Multi-Brand Clothing Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/chatbot.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #111111;
+      background: #ffffff;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Navbar ── */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 72px;
+      border-bottom: 1px solid #e4e4e7;
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+    }
+    .logo {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #111;
+    }
+    .logo span { color: #C8102E; }
+    .nav-links {
+      display: flex;
+      gap: 36px;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .nav-links a:hover { color: #C8102E; }
+    .nav-icons { display: flex; gap: 20px; align-items: center; }
+    .nav-icons svg { width: 22px; height: 22px; cursor: pointer; }
+    .nav-icons svg:hover { opacity: 0.7; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #111 100%);
+      color: #fff;
+      padding: 100px 48px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(200,16,46,0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(255,215,0,0.05) 0%, transparent 50%);
+    }
+    .hero h1 {
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.08;
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .hero h1 span { color: #C8102E; }
+    .hero p {
+      font-size: 18px;
+      color: rgba(255,255,255,0.7);
+      max-width: 560px;
+      margin: 0 auto 36px;
+      position: relative;
+    }
+    .hero-btns {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      position: relative;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 14px 36px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      font-family: inherit;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: #C8102E; color: #fff; }
+    .btn-outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.3); }
+
+    /* ── Brand strip ── */
+    .brand-strip {
+      padding: 48px;
+      text-align: center;
+      border-bottom: 1px solid #e4e4e7;
+    }
+    .brand-strip h3 {
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #71717a;
+      margin-bottom: 32px;
+    }
+    .brand-grid {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .brand-grid .brand {
+      font-size: 28px;
+      font-weight: 800;
+      color: #111;
+      opacity: 0.35;
+      transition: opacity 0.3s ease;
+      letter-spacing: -0.5px;
+    }
+    .brand-grid .brand:hover { opacity: 0.8; }
+
+    /* ── Categories ── */
+    .section {
+      padding: 80px 48px;
+    }
+    .section-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 40px;
+    }
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .cat-card {
+      position: relative;
+      height: 360px;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .cat-card:nth-child(1) { background: linear-gradient(135deg, #f5f5f5, #e5e5e5); }
+    .cat-card:nth-child(2) { background: linear-gradient(135deg, #fafafa, #eee); }
+    .cat-card:nth-child(3) { background: linear-gradient(135deg, #f0f0f0, #ddd); }
+    .cat-card:nth-child(4) { background: linear-gradient(135deg, #f8f8f8, #e8e8e8); }
+    .cat-card-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 32px;
+    }
+    .cat-card-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+      color: #71717a;
+      margin-bottom: 8px;
+    }
+    .cat-card-title {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .cat-card:hover .cat-card-title { color: #C8102E; }
+
+    /* ── Features strip ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 32px;
+      padding: 48px;
+      background: #fafafa;
+      border-top: 1px solid #e4e4e7;
+      border-bottom: 1px solid #e4e4e7;
+    }
+    .feature { text-align: center; }
+    .feature-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    .feature h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .feature p { font-size: 13px; color: #71717a; }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 48px;
+      background: #111;
+      color: #fff;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 40px;
+    }
+    .footer h4 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 20px;
+      color: rgba(255,255,255,0.5);
+    }
+    .footer a {
+      display: block;
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 10px;
+      transition: color 0.2s;
+    }
+    .footer a:hover { color: #C8102E; }
+    .footer-bottom {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .navbar { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 64px 20px 56px; }
+      .section { padding: 48px 20px; }
+      .brand-strip { padding: 36px 20px; }
+      .brand-grid { gap: 28px; }
+      .brand-grid .brand { font-size: 22px; }
+      .features { padding: 32px 20px; gap: 24px; }
+      .footer { padding: 36px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <div class="logo">THE <span>DS</span></div>
+    <div class="nav-links">
+      <a href="#">New</a>
+      <a href="#">Men</a>
+      <a href="#">Women</a>
+      <a href="#">Brands</a>
+      <a href="#">Sale</a>
+    </div>
+    <div class="nav-icons">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+      </svg>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <h1>Premium Style.<br/>Curated <span>for You</span>.</h1>
+    <p>
+      Discover the world's finest brands — Nike, Polo, Puma, Adidas, and more — all in one place. The DS brings iconic fashion to your doorstep, 24/7.
+    </p>
+    <div class="hero-btns">
+      <button class="btn btn-primary">Shop Men</button>
+      <button class="btn btn-outline">Shop Women</button>
+    </div>
+  </section>
+
+  <!-- ── Brand strip ── -->
+  <div class="brand-strip">
+    <h3>Featuring Top Global Brands</h3>
+    <div class="brand-grid">
+      <div class="brand">NIKE</div>
+      <div class="brand">POLO</div>
+      <div class="brand">PUMA</div>
+      <div class="brand">ADIDAS</div>
+      <div class="brand">RALPH LAUREN</div>
+      <div class="brand">CALVIN KLEIN</div>
+    </div>
+  </div>
+
+  <!-- ── Categories ── -->
+  <section class="section">
+    <h2 class="section-title">Shop by Category</h2>
+    <div class="categories-grid">
+      <div class="cat-card" onclick="document.querySelector('#ds-chat-bubble').click()">
+        <div class="cat-card-content">
+          <div class="cat-card-label">New Arrivals</div>
+          <div class="cat-card-title">Spring Collection '26</div>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-card-content">
+          <div class="cat-card-label">Footwear</div>
+          <div class="cat-card-title">Sneakers &amp; Classics</div>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-card-content">
+          <div class="cat-card-label">Apparel</div>
+          <div class="cat-card-title">Tees, Hoodies &amp; More</div>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-card-content">
+          <div class="cat-card-label">Accessories</div>
+          <div class="cat-card-title">Bags, Hats &amp; Watches</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ── -->
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🚚</div>
+      <h4>Free Shipping</h4>
+      <p>On orders over $75</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔄</div>
+      <h4>Easy Returns</h4>
+      <p>30-day hassle-free policy</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <h4>Secure Checkout</h4>
+      <p>SSL encrypted payments</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">💬</div>
+      <h4>24/7 Support</h4>
+      <p>We're always here to help</p>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="footer">
+    <div>
+      <h4>The DS</h4>
+      <a href="#">About Us</a>
+      <a href="#">Careers</a>
+      <a href="#">Press</a>
+      <a href="#">Blog</a>
+    </div>
+    <div>
+      <h4>Help</h4>
+      <a href="#">Customer Service</a>
+      <a href="#">Returns &amp; Exchanges</a>
+      <a href="#">Shipping Info</a>
+      <a href="#">Size Guide</a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="#">support@theds-store.com</a>
+      <a href="#">(555) 123-4567</a>
+      <a href="#">Live Chat</a>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 The DS. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- ── Chatbot Widget ── -->
+  <script src="/chatbot.js"></script>
+</body>
+</html>
