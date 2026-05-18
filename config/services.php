@@ -40,4 +40,10 @@ return [
         'chat_id' => env('TELEGRAM_CHAT_ID'),
     ],
 
+    'bakong' => [
+        'account_id' => env('BAKONG_ACCOUNT_ID'),
+        'merchant_name' => env('BAKONG_MERCHANT_NAME', 'the DS'),
+        'merchant_city' => env('BAKONG_MERCHANT_CITY', 'PHNOM PENH'),
+    ],
+
 ];

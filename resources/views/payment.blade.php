@@ -47,14 +47,17 @@
                     <div class="payment-tab-panels">
                         <div id="panel-khqr" class="payment-tab-panel is-active" role="tabpanel" aria-labelledby="tab-khqr">
                             <div class="payment-khqr">
-                                <div class="payment-khqr-qr">
-                                    <img src="{{ $qrUrl }}" alt="KHQR payment code for {{ number_format($total, 2) }} USD">
+                                <div class="payment-khqr-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
                                 </div>
-                                <p class="payment-khqr-instruction">Scan this QR code with your Bakong or banking app to complete payment.</p>
+                                <p class="payment-khqr-instruction">Pay securely with your Bakong app or any supported banking app using KHQR.</p>
                                 <div class="payment-khqr-meta">
                                     <span>Merchant: <strong>the DS</strong></span>
                                     <span>Amount: <strong>$ {{ number_format($total, 2) }}</strong></span>
                                 </div>
+                                <button type="button" class="payment-khqr-btn" id="open-khqr-modal" aria-haspopup="dialog">
+                                    Show KHQR Code
+                                </button>
                             </div>
                         </div>
 
@@ -172,11 +175,60 @@
             </aside>
         </div>
     </main>
+
+    <div class="khqr-overlay" id="khqr-overlay" role="dialog" aria-modal="true" aria-labelledby="khqr-modal-title" tabindex="-1">
+        <div class="khqr-modal">
+            <button type="button" class="khqr-modal-close" id="close-khqr-modal" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h2 id="khqr-modal-title" class="khqr-modal-title">Scan to Pay with Bakong</h2>
+            <div class="khqr-modal-qr">
+                <img src="{{ $qrUrl }}" alt="Bakong KHQR code for {{ number_format($total, 2) }} USD">
+            </div>
+            <div class="khqr-modal-meta">
+                <span>Merchant: <strong>the DS</strong></span>
+                <span>Amount: <strong>$ {{ number_format($total, 2) }}</strong></span>
+            </div>
+            <p class="khqr-modal-hint">Open your Bakong app or bank app, choose <strong>Scan KHQR</strong>, and point your camera at the code above.</p>
+            <button type="button" class="khqr-modal-done" id="khqr-modal-done">Done</button>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
     (function() {
+        const openBtn = document.getElementById('open-khqr-modal');
+        const closeBtn = document.getElementById('close-khqr-modal');
+        const doneBtn = document.getElementById('khqr-modal-done');
+        const overlay = document.getElementById('khqr-overlay');
+
+        function openModal() {
+            overlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            closeBtn.focus();
+        }
+
+        function closeModal() {
+            overlay.classList.remove('is-open');
+            document.body.style.overflow = '';
+            if (openBtn) openBtn.focus();
+        }
+
+        if (openBtn) openBtn.addEventListener('click', openModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (doneBtn) doneBtn.addEventListener('click', closeModal);
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('is-open')) {
+                closeModal();
+            }
+        });
+
         const tabs = document.querySelectorAll('.payment-step-tab');
         const panels = document.querySelectorAll('.payment-tab-panel');
 

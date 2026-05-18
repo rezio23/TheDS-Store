@@ -8,6 +8,10 @@ use App\Models\Promotion;
 use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use KHQR\BakongKHQR;
+use KHQR\Helpers\KHQRData;
+use KHQR\Models\IndividualInfo;
 
 class CheckoutController extends Controller
 {
@@ -99,10 +103,35 @@ class CheckoutController extends Controller
         $promoCode = session('promo_code');
         $totals = $this->getTotals($cart, $shipping, $promoCode);
 
-        $qrData = 'KHQR|theDS|' . number_format($totals['total'], 2) . '|USD';
-        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . urlencode($qrData);
+        $khqrString = null;
+        $bakongAccountId = config('services.bakong.account_id');
 
-        return view('payment', array_merge(compact('cart', 'shipping', 'promoCode', 'qrUrl'), $totals));
+        if ($bakongAccountId && $bakongAccountId !== 'your_bakong_id@nbcq') {
+            try {
+                $individualInfo = IndividualInfo::withOptionalArray(
+                    $bakongAccountId,
+                    config('services.bakong.merchant_name', 'the DS'),
+                    config('services.bakong.merchant_city', 'PHNOM PENH'),
+                    [
+                        'currency' => KHQRData::CURRENCY_USD,
+                        'amount' => (float) $totals['total'],
+                    ]
+                );
+
+                $response = BakongKHQR::generateIndividual($individualInfo);
+                $khqrString = $response->data['qr'] ?? null;
+            } catch (\Exception $e) {
+                Log::warning('Bakong KHQR generation failed: ' . $e->getMessage());
+            }
+        }
+
+        if (! $khqrString) {
+            $khqrString = 'KHQR|theDS|' . number_format($totals['total'], 2) . '|USD';
+        }
+
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($khqrString);
+
+        return view('payment', array_merge(compact('cart', 'shipping', 'promoCode', 'qrUrl', 'khqrString'), $totals));
     }
 
     public function applyPromo(Request $request)
