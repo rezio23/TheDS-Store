@@ -304,7 +304,7 @@ class DashboardController extends Controller
                             'size' => $item->size,
                             'quantity' => $item->quantity,
                             'product_price' => (float) $item->product_price,
-                            'product_image' => $item->product_image,
+                            'product_image' => storage_url($item->product_image),
                         ];
                     }),
                 ];
@@ -330,7 +330,7 @@ class DashboardController extends Controller
                             'size' => $item->size,
                             'quantity' => $item->quantity,
                             'product_price' => (float) $item->product_price,
-                            'product_image' => $item->product_image,
+                            'product_image' => storage_url($item->product_image),
                         ];
                     }),
                 ];
@@ -365,12 +365,14 @@ class DashboardController extends Controller
             'tags' => 'nullable|string',
             'badge' => 'nullable|string|max:255',
             'rating' => 'nullable|string|max:10',
-            'image' => 'required|url|max:2000',
+            'image_url' => 'required|url|max:2048',
             'gallery' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($data['name'])), '-');
+        $imagePath = $data['image_url'];
+
         Product::create([
             'slug' => $slug,
             'name' => $data['name'],
@@ -380,7 +382,7 @@ class DashboardController extends Controller
             'tags' => $data['tags'] ?? '',
             'rating' => $data['rating'] ?? '',
             'badge' => $data['badge'] ?? '',
-            'image' => $data['image'],
+            'image' => $imagePath,
             'gallery' => $data['gallery'] ?? '',
             'category' => $data['category'] ?? '',
         ]);
@@ -413,13 +415,14 @@ class DashboardController extends Controller
             'tags' => 'nullable|string',
             'badge' => 'nullable|string|max:255',
             'rating' => 'nullable|string|max:10',
-            'image' => 'required|url|max:2000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image_url' => 'nullable|url|max:2048',
             'gallery' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($data['name'])), '-');
-        Product::where('id', $productId)->update([
+        $updateData = [
             'slug' => $slug,
             'name' => $data['name'],
             'brand' => $data['brand'],
@@ -430,9 +433,16 @@ class DashboardController extends Controller
             'tags' => $data['tags'] ?? '',
             'badge' => $data['badge'] ?? '',
             'rating' => $data['rating'] ?? '',
-            'image' => $data['image'],
             'gallery' => $data['gallery'] ?? '',
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            $updateData['image'] = $request->file('image')->store('uploads/products', 'public');
+        } elseif (!empty($data['image_url'])) {
+            $updateData['image'] = $data['image_url'];
+        }
+
+        Product::where('id', $productId)->update($updateData);
 
         return redirect()->route('admin.dashboard', ['tab' => 'products']);
     }

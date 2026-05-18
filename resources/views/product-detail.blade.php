@@ -62,14 +62,14 @@
                 <div class="product-gallery" data-product-gallery>
                     <div class="product-thumbs" role="list" aria-label="Product images">
                         @foreach ($gallery as $index => $image)
-                            <button class="product-thumb {{ $index === 0 ? 'is-active' : '' }}" type="button" role="listitem" data-product-gallery-thumb data-gallery-image="{{ asset('storage/' . $image) }}" data-gallery-alt="{{ $product->name }} product image" aria-label="Show image {{ $index + 1 }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
-                                <img src="{{ asset('storage/' . $image) }}" alt="">
+                            <button class="product-thumb {{ $index === 0 ? 'is-active' : '' }}" type="button" role="listitem" data-product-gallery-thumb data-gallery-image="{{ storage_url($image) }}" data-gallery-alt="{{ $product->name }} product image" aria-label="Show image {{ $index + 1 }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
+                                <img src="{{ storage_url($image) }}" alt="">
                             </button>
                         @endforeach
                     </div>
 
                     <figure class="product-hero-media">
-                        <img data-product-gallery-main src="{{ asset('storage/' . ($gallery[0] ?? $product->image)) }}" alt="{{ $product->name }} product image">
+                        <img data-product-gallery-main src="{{ storage_url($gallery[0] ?? $product->image) }}" alt="{{ $product->name }} product image">
                         <figcaption class="product-badges" aria-label="Product badges">
                             <span>{{ $product->badge }}</span>
                             <span>{{ $product->rating }} star</span>
@@ -122,7 +122,7 @@
                                 $relatedImage = $relatedGallery[0] ?? '';
                             @endphp
                             <a href="{{ route('product.show', ['slug' => $related->slug]) }}" aria-label="View {{ $related->name }}" title="{{ $related->name }}">
-                                <img src="{{ asset('storage/' . $relatedImage) }}" alt="{{ $related->name }}">
+                                <img src="{{ storage_url($relatedImage) }}" alt="{{ $related->name }}">
                             </a>
                         @endforeach
                     </div>

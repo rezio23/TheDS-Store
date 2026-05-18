@@ -106,7 +106,7 @@
                     @foreach (array_values($cart) as $index => $item)
                         <div class="shipping-cart-item">
                             <div class="shipping-cart-thumb">
-                                <img src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}">
+                                <img src="{{ storage_url($item['image']) }}" alt="{{ $item['name'] }}">
                                 <span class="shipping-cart-badge">{{ $index + 1 }}</span>
                             </div>
                             <div class="shipping-cart-info">

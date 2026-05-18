@@ -149,7 +149,7 @@
                             data-groups="{{ $groupsStr }}"
                         >
                             <a class="product-image" href="{{ $productHref }}" aria-label="View {{ $product->name }}">
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
+                                <img src="{{ storage_url($product->image) }}" alt="{{ $product->name }}">
                             </a>
                             <div class="product-info">
                                 <p>{{ $product->brand }}</p>

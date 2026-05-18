@@ -87,7 +87,7 @@
                         @forelse ($orders as $order)
                             @php
                                 $firstItem = $order->items->first();
-                                $cardImage = $firstItem ? asset('storage/' . $firstItem->product_image) : '';
+                                $cardImage = $firstItem ? storage_url($firstItem->product_image) : '';
                                 $cardName = $firstItem ? $firstItem->product_name : 'Order #' . $order->id;
                                 $cardBrand = $firstItem ? $firstItem->product_brand : 'The DS';
                                 $cardDesc = 'Order total: $' . number_format($order->total, 2) . ' | Status: ' . ucfirst($order->status);
@@ -160,7 +160,7 @@
                             <article class="profile-product-card">
                                 <a class="profile-product-image" href="{{ route('product.show', ['slug' => $product->slug]) }}" aria-label="View {{ $product->name }}">
                                     @if ($product->image)
-                                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
+                                        <img src="{{ storage_url($product->image) }}" alt="{{ $product->name }}">
                                     @else
                                         <div style="display:flex;align-items:center;justify-content:center;background:#f8f8f8;height:100%;">
                                             <i data-lucide="heart" style="width:48px;height:48px;color:#aaa;"></i>

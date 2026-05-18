@@ -35,7 +35,7 @@
                 @foreach ($cart as $key => $item)
                     <div class="cart-table-row">
                         <div class="cart-product-cell">
-                            <img src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}">
+                            <img src="{{ storage_url($item['image']) }}" alt="{{ $item['name'] }}">
                             <div class="cart-product-meta">
                                 <strong>{{ $item['name'] }}</strong>
                                 <span>Size: {{ $item['size'] }}</span>
