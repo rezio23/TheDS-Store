@@ -1,5 +1,20 @@
 /legacy/
 
+# Laravel IDE helper
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# Vite dev temp files
+vite.config.js.timestamp-*
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+
+# JetBrains Fleet
+/.fleet
+
 # Environment files
 .env
 .env.backup
