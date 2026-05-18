@@ -5,11 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Promotion;
+use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CheckoutController extends Controller
 {
+    protected TelegramService $telegram;
+
+    public function __construct(TelegramService $telegram)
+    {
+        $this->telegram = $telegram;
+    }
     private function getTotals(array $cart, array $shipping = [], ?string $promoCode = null): array
     {
         $subtotal = array_sum(array_map(function ($item) {
@@ -203,6 +210,9 @@ class CheckoutController extends Controller
         if ($totals['promotion']) {
             $totals['promotion']->increment('uses_count');
         }
+
+        $order->load('items');
+        $this->telegram->sendOrderNotification($order);
 
         session()->forget(['cart', 'shipping', 'promo_code']);
 
