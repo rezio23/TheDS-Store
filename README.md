@@ -364,11 +364,26 @@ Contact Bakong or your bank to obtain a merchant account ID for KHQR payments.
 ### Supported Drivers
 - **MySQL** — Recommended for production
 - **SQLite** — Convenient for local development
+- **SQL Server** — Enterprise deployments (raw SQL scripts provided)
 
 ### Migrations
 Run all migrations:
 ```bash
 php artisan migrate
+```
+
+### Raw SQL Scripts
+Pre-built SQL scripts are available in `database/sql/` for setting up the schema and sample data without running Laravel migrations:
+
+| File | Purpose |
+|------|---------|
+| `01_create_tables.sql` | `CREATE TABLE` statements for all 10 tables (SQL Server syntax) |
+| `02_insert_data.sql` | Sample seed data (users, categories, products, promotions) |
+
+Run them in order via SQL Server Management Studio (SSMS) or `sqlcmd`:
+```bash
+sqlcmd -S localhost -d your_database -i database/sql/01_create_tables.sql
+sqlcmd -S localhost -d your_database -i database/sql/02_insert_data.sql
 ```
 
 ### Schema Overview
@@ -391,8 +406,10 @@ Laravel also creates internal framework tables (`cache`, `cache_locks`, `jobs`, 
 The `DatabaseSeeder` creates:
 - **3 Users:**
   - `test@example.com` / `password` (regular customer)
+  - `sombath@gmail.com` / `password` (regular customer)
   - `admin@gmail.com` / `password` (administrator with `is_admin = true`)
 - **8 Sample Products** — perfumes, sneakers, bags, and polo shirts
+- **3 Promotions** — `WELCOME10`, `SAVE20`, `FLASH50`
 
 ---
 
