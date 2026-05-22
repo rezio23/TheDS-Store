@@ -5761,34 +5761,52 @@ body.shop-page {
     font-weight: 400;
 }
 
+/* Payment tabs — minimal like Nike/Apple checkout */
 .payment-step-tabs {
     display: flex;
     align-items: center;
     gap: 0;
-    border-radius: 8px;
-    overflow: hidden;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     margin-bottom: clamp(18px, 2vw, 24px);
 }
 
 .payment-step-tab {
+    position: relative;
     flex: 1 1 0;
-    min-height: 40px;
+    min-height: 44px;
     display: grid;
     place-items: center;
     border: 0;
-    background: var(--bg);
-    color: var(--ink);
+    background: transparent;
+    color: rgba(0, 0, 0, 0.45);
     font-family: var(--font-main);
-    font-size: clamp(0.68rem, 0.78vw, 0.88rem);
+    font-size: clamp(0.7rem, 0.8vw, 0.88rem);
     font-weight: 400;
     text-align: center;
     cursor: pointer;
-    transition: background 180ms ease, color 180ms ease;
+    transition: color 180ms ease;
+    padding: 10px 8px;
+    line-height: 1.2;
+}
+
+.payment-step-tab:hover {
+    color: var(--ink);
 }
 
 .payment-step-tab.is-active {
-    background: var(--accent);
-    color: #fff;
+    color: var(--ink);
+    font-weight: 400;
+}
+
+.payment-step-tab.is-active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 12px;
+    right: 12px;
+    height: 2px;
+    background: var(--ink);
+    border-radius: 2px 2px 0 0;
 }
 
 .payment-tab-panels {
@@ -5803,7 +5821,128 @@ body.shop-page {
     display: block;
 }
 
-.payment-khqr {
+/* Simple payment method body */
+.payment-method-body {
+    padding: clamp(4px, 0.5vw, 8px) 0;
+}
+
+.payment-method-text {
+    margin: 0 0 clamp(16px, 2vw, 22px);
+    font-size: clamp(0.78rem, 0.88vw, 0.95rem);
+    line-height: 1.55;
+    color: rgba(0, 0, 0, 0.62);
+}
+
+.payment-action-btn {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: var(--ink);
+    color: #fff;
+    font-family: var(--font-main);
+    font-size: clamp(0.78rem, 0.88vw, 0.95rem);
+    font-weight: 400;
+    cursor: pointer;
+    transition: opacity 180ms ease;
+    padding: 0 28px;
+    width: 100%;
+    line-height: 1.2;
+}
+
+.payment-action-btn:hover:not(:disabled) {
+    opacity: 0.88;
+}
+
+.payment-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.payment-secure-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: clamp(14px, 1.5vw, 18px) 0 0;
+    font-size: clamp(0.62rem, 0.68vw, 0.75rem);
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.payment-secure-text svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: rgba(0, 0, 0, 0.35);
+}
+
+.payment-method-error {
+    margin: 8px 0 0;
+    color: #e63946;
+    font-size: 0.82rem;
+    text-align: center;
+    display: none;
+}
+
+/* Card form — clean minimal inputs */
+.payment-card-form {
+    display: grid;
+    gap: clamp(16px, 2vw, 22px);
+}
+
+.payment-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(14px, 1.5vw, 22px);
+}
+
+.payment-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.payment-form-group--wide {
+    grid-column: 1 / -1;
+}
+
+.payment-form-group label {
+    margin: 0;
+    font-size: clamp(0.72rem, 0.82vw, 0.88rem);
+    line-height: 1.2;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.72);
+}
+
+.payment-form-group input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+    font-family: var(--font-primary);
+    font-size: 0.82rem;
+    font-weight: 800;
+    outline: 0;
+    transition: border-color 180ms ease;
+}
+
+.payment-form-group input::placeholder {
+    color: rgba(0, 0, 0, 0.28);
+    font-weight: 400;
+}
+
+.payment-form-group input:focus {
+    border-color: var(--ink);
+}
+
+/* Legacy payment styles (kept for compatibility where referenced elsewhere) */
+.payment-khqr,
+.payment-aba,
+.payment-paypal {
     display: grid;
     place-items: center;
     gap: clamp(14px, 1.5vw, 18px);
@@ -5824,7 +5963,9 @@ body.shop-page {
     object-fit: contain;
 }
 
-.payment-khqr-instruction {
+.payment-khqr-instruction,
+.payment-aba-instruction,
+.payment-paypal-instruction {
     margin: 0;
     max-width: 320px;
     font-size: clamp(0.68rem, 0.78vw, 0.88rem);
@@ -5833,7 +5974,9 @@ body.shop-page {
     color: rgba(0, 0, 0, 0.72);
 }
 
-.payment-khqr-meta {
+.payment-khqr-meta,
+.payment-aba-meta,
+.payment-paypal-meta {
     display: flex;
     gap: clamp(12px, 1.5vw, 18px);
     flex-wrap: wrap;
@@ -5843,10 +5986,56 @@ body.shop-page {
     color: rgba(0, 0, 0, 0.72);
 }
 
-.payment-khqr-meta strong {
+.payment-khqr-meta strong,
+.payment-aba-meta strong,
+.payment-paypal-meta strong {
     color: var(--accent);
     font-family: var(--font-primary);
     font-weight: 800;
+}
+
+.payment-khqr-btn,
+.payment-aba-btn {
+    min-height: 44px;
+    padding: 0 28px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-main);
+    font-size: clamp(0.82rem, 0.95vw, 1.05rem);
+    font-weight: 400;
+    cursor: pointer;
+    transition: transform 180ms ease, filter 180ms ease;
+    margin-top: 6px;
+}
+
+.payment-khqr-btn:hover,
+.payment-aba-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+
+.payment-aba-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.payment-khqr-icon,
+.payment-aba-icon {
+    width: clamp(64px, 8vw, 88px);
+    height: clamp(64px, 8vw, 88px);
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--accent);
+    margin-bottom: 4px;
+}
+
+.payment-aba-icon {
+    background: var(--bg);
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .payment-card-form {
@@ -5872,9 +6061,10 @@ body.shop-page {
 
 .payment-form-group label {
     margin: 0;
-    font-size: clamp(0.82rem, 0.95vw, 1.05rem);
+    font-size: clamp(0.78rem, 0.88vw, 0.95rem);
     line-height: 1.2;
     font-weight: 400;
+    color: rgba(0, 0, 0, 0.72);
 }
 
 .payment-form-group input {
@@ -6072,11 +6262,22 @@ body.shop-page {
     .payment-form-row {
         grid-template-columns: 1fr;
     }
+
+    .payment-step-tab {
+        padding: 8px 4px;
+        font-size: 0.65rem;
+    }
+
+    .payment-step-tab.is-active::after {
+        left: 4px;
+        right: 4px;
+    }
 }
 
 @media (max-width: 560px) {
     .payment-step-tab {
-        padding: 10px 14px;
+        padding: 8px 4px;
+        font-size: 0.62rem;
     }
 }
 
@@ -6333,6 +6534,73 @@ body.shop-page {
     filter: brightness(1.08);
 }
 
+.payment-aba {
+    display: grid;
+    place-items: center;
+    gap: clamp(14px, 1.5vw, 18px);
+    text-align: center;
+}
+
+.payment-aba-icon {
+    width: clamp(64px, 8vw, 88px);
+    height: clamp(64px, 8vw, 88px);
+    display: grid;
+    place-items: center;
+    background: var(--bg);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--accent);
+    margin-bottom: 4px;
+}
+
+.payment-aba-instruction {
+    margin: 0;
+    max-width: 320px;
+    font-size: clamp(0.68rem, 0.78vw, 0.88rem);
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.72);
+}
+
+.payment-aba-meta {
+    display: flex;
+    gap: clamp(12px, 1.5vw, 18px);
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: clamp(0.68rem, 0.78vw, 0.88rem);
+    color: rgba(0, 0, 0, 0.72);
+}
+
+.payment-aba-meta strong {
+    color: var(--accent);
+    font-family: var(--font-primary);
+    font-weight: 800;
+}
+
+.payment-aba-btn {
+    min-height: 44px;
+    padding: 0 28px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-primary);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+    margin-top: 6px;
+}
+
+.payment-aba-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+
+.payment-aba-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 @media (max-width: 560px) {
     .khqr-modal {
         padding: 24px 20px;
@@ -6347,7 +6615,9 @@ body.shop-page {
         width: 100%;
     }
 
-    .payment-khqr-btn {
+    .payment-khqr-btn,
+    .payment-aba-btn,
+    .payment-action-btn {
         width: 100%;
     }
 }

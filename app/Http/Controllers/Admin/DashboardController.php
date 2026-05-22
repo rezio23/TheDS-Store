@@ -296,6 +296,7 @@ class DashboardController extends Controller
                     'customer' => $order->user->full_name ?? 'Guest',
                     'total' => (float) $order->total,
                     'status' => $order->status,
+                    'payment' => ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')),
                     'date' => $order->created_at->format('M d, Y'),
                     'items' => $order->items->map(function ($item) {
                         return [
@@ -321,6 +322,7 @@ class DashboardController extends Controller
                     'discount' => (float) $order->discount,
                     'promo' => $order->promotion->code ?? null,
                     'status' => $order->status,
+                    'payment' => ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')),
                     'shipping' => $order->shipping_mode ?? 'Standard',
                     'datetime' => $order->created_at->format('M d, Y H:i'),
                     'items' => $order->items->map(function ($item) {

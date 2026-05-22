@@ -46,4 +46,18 @@ return [
         'merchant_city' => env('BAKONG_MERCHANT_CITY', 'PHNOM PENH'),
     ],
 
+    'paypal' => [
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+    ],
+
+    'aba_payway' => [
+        'merchant_id' => env('ABA_PAYWAY_MERCHANT_ID'),
+        'api_key' => env('ABA_PAYWAY_API_KEY'),
+        'public_key' => env('ABA_PAYWAY_PUBLIC_KEY'),
+        'private_key' => env('ABA_PAYWAY_PRIVATE_KEY'),
+        'base_url' => env('ABA_PAYWAY_BASE_URL', 'https://checkout-sandbox.payway.com.kh'),
+    ],
+
 ];

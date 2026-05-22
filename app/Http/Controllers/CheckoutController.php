@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Promotion;
+use App\Services\AbaPaywayService;
 use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,10 +17,12 @@ use KHQR\Models\IndividualInfo;
 class CheckoutController extends Controller
 {
     protected TelegramService $telegram;
+    protected AbaPaywayService $abaPayway;
 
-    public function __construct(TelegramService $telegram)
+    public function __construct(TelegramService $telegram, AbaPaywayService $abaPayway)
     {
         $this->telegram = $telegram;
+        $this->abaPayway = $abaPayway;
     }
     private function getSizeStock(\App\Models\Product $product, string $size): ?int
     {
@@ -140,7 +143,9 @@ class CheckoutController extends Controller
 
         $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($khqrString);
 
-        return view('payment', array_merge(compact('cart', 'shipping', 'promoCode', 'qrUrl', 'khqrString'), $totals));
+        $paypalClientId = config('services.paypal.client_id');
+
+        return view('payment', array_merge(compact('cart', 'shipping', 'promoCode', 'qrUrl', 'khqrString', 'paypalClientId'), $totals));
     }
 
     public function applyPromo(Request $request)
@@ -236,6 +241,7 @@ class CheckoutController extends Controller
             'total' => $totals['total'],
             'discount' => $totals['discount'],
             'status' => 'pending',
+            'payment_method' => $paymentMethod,
             'shipping_name' => $shipping['full_name'],
             'shipping_phone' => $shipping['phone'],
             'shipping_address' => $address,
@@ -266,5 +272,181 @@ class CheckoutController extends Controller
         session()->forget(['cart', 'shipping', 'promo_code']);
 
         return redirect()->route('profile', ['ordered' => 1]);
+    }
+
+    public function processPayPal(Request $request)
+    {
+        $cart = session('cart', []);
+        $shipping = session('shipping', []);
+
+        if (empty($cart) || empty($shipping)) {
+            return response()->json(['success' => false, 'message' => 'Invalid checkout state.'], 400);
+        }
+
+        foreach ($cart as $key => $item) {
+            $product = \App\Models\Product::with('sizes')->where('slug', $item['slug'])->first();
+            if (!$product) {
+                return response()->json(['success' => false, 'message' => 'Product not found: ' . $item['name']], 400);
+            }
+            $stock = $this->getSizeStock($product, $item['size']);
+            if ($stock !== null && $item['quantity'] > $stock) {
+                return response()->json(['success' => false, 'message' => 'Only ' . $stock . ' item(s) available for size ' . $item['size'] . ' of ' . $item['name'] . '.'], 400);
+            }
+        }
+
+        $request->validate([
+            'paypal_order_id' => ['required', 'string', 'max:255'],
+        ]);
+
+        $promoCode = session('promo_code');
+        $totals = $this->getTotals($cart, $shipping, $promoCode);
+
+        $address = ($shipping['address_1'] ?? '');
+        if (!empty($shipping['address_2'])) {
+            $address .= ', ' . $shipping['address_2'];
+        }
+
+        $order = Order::create([
+            'user_id' => Auth::id(),
+            'promotion_id' => $totals['promotion']?->id,
+            'total' => $totals['total'],
+            'discount' => $totals['discount'],
+            'status' => 'pending',
+            'payment_method' => 'paypal',
+            'shipping_name' => $shipping['full_name'],
+            'shipping_phone' => $shipping['phone'],
+            'shipping_address' => $address,
+            'shipping_postal' => $shipping['postal_code'],
+            'shipping_email' => $shipping['email'],
+            'shipping_mode' => $shipping['shipping_mode'],
+        ]);
+
+        foreach ($cart as $item) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_name' => $item['name'],
+                'product_brand' => $item['brand'],
+                'product_price' => $item['price'],
+                'quantity' => $item['quantity'],
+                'size' => $item['size'] ?? 'One Size',
+                'product_image' => $item['image'] ?? null,
+            ]);
+        }
+
+        if ($totals['promotion']) {
+            $totals['promotion']->increment('uses_count');
+        }
+
+        $order->load('items');
+        $this->telegram->sendOrderNotification($order);
+
+        session()->forget(['cart', 'shipping', 'promo_code']);
+
+        return response()->json(['success' => true, 'redirect' => route('profile', ['ordered' => 1])]);
+    }
+
+    public function processAbaPayway(Request $request)
+    {
+        $cart = session('cart', []);
+        $shipping = session('shipping', []);
+
+        if (empty($cart) || empty($shipping)) {
+            return response()->json(['success' => false, 'message' => 'Invalid checkout state.'], 400);
+        }
+
+        foreach ($cart as $key => $item) {
+            $product = \App\Models\Product::with('sizes')->where('slug', $item['slug'])->first();
+            if (!$product) {
+                return response()->json(['success' => false, 'message' => 'Product not found: ' . $item['name']], 400);
+            }
+            $stock = $this->getSizeStock($product, $item['size']);
+            if ($stock !== null && $item['quantity'] > $stock) {
+                return response()->json(['success' => false, 'message' => 'Only ' . $stock . ' item(s) available for size ' . $item['size'] . ' of ' . $item['name'] . '.'], 400);
+            }
+        }
+
+        $promoCode = session('promo_code');
+        $totals = $this->getTotals($cart, $shipping, $promoCode);
+
+        $address = ($shipping['address_1'] ?? '');
+        if (!empty($shipping['address_2'])) {
+            $address .= ', ' . $shipping['address_2'];
+        }
+
+        $transactionId = substr('ABA' . time() . (Auth::id() ?? '0'), 0, 20);
+
+        $result = $this->abaPayway->createPurchase(
+            $transactionId,
+            (float) $totals['total'],
+            $shipping,
+            $cart,
+            route('payment.aba.return'),
+            route('payment')
+        );
+
+        if (!$result['success']) {
+            return response()->json(['success' => false, 'message' => $result['message']], 500);
+        }
+
+        $order = Order::create([
+            'user_id' => Auth::id(),
+            'promotion_id' => $totals['promotion']?->id,
+            'total' => $totals['total'],
+            'discount' => $totals['discount'],
+            'status' => 'pending',
+            'payment_method' => 'aba_payway',
+            'gateway_transaction_id' => $transactionId,
+            'shipping_name' => $shipping['full_name'],
+            'shipping_phone' => $shipping['phone'],
+            'shipping_address' => $address,
+            'shipping_postal' => $shipping['postal_code'],
+            'shipping_email' => $shipping['email'],
+            'shipping_mode' => $shipping['shipping_mode'],
+        ]);
+
+        foreach ($cart as $item) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_name' => $item['name'],
+                'product_brand' => $item['brand'],
+                'product_price' => $item['price'],
+                'quantity' => $item['quantity'],
+                'size' => $item['size'] ?? 'One Size',
+                'product_image' => $item['image'] ?? null,
+            ]);
+        }
+
+        if ($totals['promotion']) {
+            $totals['promotion']->increment('uses_count');
+        }
+
+        $order->load('items');
+        $this->telegram->sendOrderNotification($order);
+
+        session()->forget(['cart', 'shipping', 'promo_code']);
+
+        return response()->json(['success' => true, 'redirect' => $result['payment_url']]);
+    }
+
+    public function abaReturn(Request $request)
+    {
+        $transactionId = $request->input('transaction_id');
+        $status = $request->input('status');
+
+        $order = Order::where('gateway_transaction_id', $transactionId)->first();
+
+        if (!$order) {
+            return redirect()->route('profile')->with('error', 'Order not found.');
+        }
+
+        $order->update([
+            'status' => $status === 'success' ? 'paid' : 'failed',
+        ]);
+
+        if ($status === 'success') {
+            return redirect()->route('profile', ['ordered' => 1])->with('success', 'Payment completed successfully.');
+        }
+
+        return redirect()->route('profile')->with('error', 'Payment was cancelled or failed.');
     }
 }

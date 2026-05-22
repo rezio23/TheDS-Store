@@ -17,6 +17,8 @@ class Order extends Model
         'total',
         'discount',
         'status',
+        'payment_method',
+        'gateway_transaction_id',
         'shipping_name',
         'shipping_phone',
         'shipping_address',

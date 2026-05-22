@@ -29,6 +29,7 @@ class TelegramService
         $lines[] = '';
         $lines[] = 'Order ID: <b>#' . $order->id . '</b>';
         $lines[] = 'Status: <code>' . ucfirst($order->status) . '</code>';
+        $lines[] = 'Payment: <code>' . ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) . '</code>';
         $lines[] = '';
         $lines[] = '👤 <b>Customer</b>';
         $lines[] = 'Name: ' . e($order->shipping_name);

@@ -140,6 +140,7 @@
                                     <th>Customer</th>
                                     <th>Items</th>
                                     <th>Total</th>
+                                    <th>Payment</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Action</th>
@@ -152,10 +153,11 @@
                                         <td>{{ $order->user->full_name ?? 'Guest' }}</td>
                                         <td>{{ $order->items->count() }} item{{ $order->items->count() !== 1 ? 's' : '' }}</td>
                                         <td>${{ number_format($order->total, 2) }}</td>
+                                        <td>{{ ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}</td>
                                         <td><span class="admin-badge-status status-{{ $order->status }}">{{ ucfirst($order->status) }}</span></td>
                                         <td>{{ $order->created_at->format('M d, Y') }}</td>
                                         <td>
-                                                <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
+                                                <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-payment="{{ ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -205,6 +207,7 @@
                             <th>Total</th>
                             <th>Discount</th>
                             <th>Promo</th>
+                            <th>Payment</th>
                             <th>Status</th>
                             <th>Shipping</th>
                             <th>Date</th>
@@ -220,6 +223,7 @@
                                 <td>${{ number_format($order->total, 2) }}</td>
                                 <td>{{ $order->discount > 0 ? '-$' . number_format($order->discount, 2) : '—' }}</td>
                                 <td>{{ $order->promotion->code ?? '—' }}</td>
+                                <td>{{ ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}</td>
                                 <td><span class="admin-badge-status status-{{ $order->status }}">{{ ucfirst($order->status) }}</span></td>
                                 <td>{{ $order->shipping_mode ?? 'Standard' }}</td>
                                 <td>{{ $order->created_at->format('M d, Y H:i') }}</td>
@@ -242,7 +246,7 @@
                                             </div>
                                             <button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>
                                         </form>
-                                        <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-discount="{{ $order->discount }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
+                                        <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-discount="{{ $order->discount }}" data-order-payment="{{ ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
                                     </div>
                                 </td>
                             </tr>
@@ -1847,10 +1851,11 @@
             '<td>' + escapeHtml(order.customer) + '</td>' +
             '<td>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</td>' +
             '<td>$' + formatMoney(order.total) + '</td>' +
+            '<td>' + escapeHtml(order.payment || 'N/A') + '</td>' +
             '<td><span class="admin-badge-status status-' + order.status + '">' + order.status.charAt(0).toUpperCase() + order.status.slice(1) + '</span></td>' +
             '<td>' + escapeHtml(order.date) + '</td>' +
             '<td>' +
-                '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.date) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
+                '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-payment="' + escapeHtml(order.payment || 'N/A') + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.date) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
                     'View' +
                 '</button>' +
             '</td>' +
@@ -1878,6 +1883,7 @@
             '<td>$' + formatMoney(order.total) + '</td>' +
             '<td>' + discount + '</td>' +
             '<td>' + promo + '</td>' +
+            '<td>' + escapeHtml(order.payment || 'N/A') + '</td>' +
             '<td><span class="admin-badge-status status-' + order.status + '">' + statusLabel + '</span></td>' +
             '<td>' + shipping + '</td>' +
             '<td>' + escapeHtml(order.datetime) + '</td>' +
@@ -1900,7 +1906,7 @@
                         '</div>' +
                         '<button type="submit" name="update_order_status" class="admin-btn admin-btn--small">Update</button>' +
                     '</form>' +
-                    '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-discount="' + (order.discount || 0) + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.datetime) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
+                    '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-discount="' + (order.discount || 0) + '" data-order-payment="' + escapeHtml(order.payment || 'N/A') + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.datetime) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
                         'View' +
                     '</button>' +
                 '</div>' +
@@ -2043,6 +2049,10 @@
                     <strong id="odm-date"></strong>
                 </div>
                 <div class="meta-item">
+                    <span>Payment</span>
+                    <strong id="odm-payment"></strong>
+                </div>
+                <div class="meta-item">
                     <span>Total</span>
                     <strong id="odm-total"></strong>
                 </div>
@@ -2106,6 +2116,7 @@
         var customer = btn.getAttribute('data-order-customer');
         var status = btn.getAttribute('data-order-status');
         var total = btn.getAttribute('data-order-total');
+        var payment = btn.getAttribute('data-order-payment') || 'N/A';
         var shipping = btn.getAttribute('data-order-shipping') || 'Standard';
         var date = btn.getAttribute('data-order-date');
         var itemsRaw = btn.getAttribute('data-order-items');
@@ -2116,6 +2127,7 @@
         document.getElementById('odm-customer').textContent = customer;
         document.getElementById('odm-status').textContent = status.charAt(0).toUpperCase() + status.slice(1);
         document.getElementById('odm-status').className = 'admin-badge-status status-' + status;
+        document.getElementById('odm-payment').textContent = payment;
         document.getElementById('odm-shipping').textContent = shipping;
         document.getElementById('odm-date').textContent = date;
         document.getElementById('odm-total').textContent = '$' + formatMoney(total);
