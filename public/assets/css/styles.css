@@ -2414,25 +2414,26 @@ body.shop-page {
 }
 
 .product-size-grid {
-    width: min(520px, 100%);
+    width: min(560px, 100%);
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
 }
 
 .product-size-grid button {
     position: relative;
     isolation: isolate;
-    min-height: 58px;
-    padding: 0 12px;
+    min-height: 44px;
+    padding: 0 10px;
     overflow: hidden;
     border: 0;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.78);
     color: var(--accent);
     font-family: var(--font-primary);
-    font-size: 0.92rem;
+    font-size: 0.78rem;
     font-weight: 800;
+    white-space: nowrap;
     cursor: pointer;
     transition:
         color 240ms ease,
@@ -4044,6 +4045,12 @@ body.shop-page {
 
     .product-size-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .product-size-grid button {
+        font-size: 0.78rem;
+        padding: 0 10px;
+        min-height: 40px;
     }
 
     .category-card:nth-child(n) a {

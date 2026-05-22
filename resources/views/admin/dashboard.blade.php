@@ -489,11 +489,11 @@
                             <tr>
                                 <td>{{ $productIndex++ }}</td>
                                 <td>{{ $product->id }}</td>
-                                <td><img src="{{ asset('storage/' . $product->image) }}" alt="" class="admin-product-thumb"></td>
+                                <td><img src="{{ storage_url($product->image) }}" alt="" class="admin-product-thumb"></td>
                                 <td>{{ $product->name }}</td>
                                 <td>{{ $product->brand }}</td>
                                 <td>${{ number_format($product->price, 2) }}</td>
-                                <td>{{ $product->stock ?? 0 }}</td>
+                                <td>{{ $product->sizes->isNotEmpty() ? $product->sizes->sum('quantity') : ($product->stock ?? 0) }}</td>
                                 <td>{{ $product->categoryModel->name ?? '—' }}</td>
                                 <td>
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -503,12 +503,12 @@
                                             data-p-name="{{ $product->name }}"
                                             data-p-brand="{{ $product->brand }}"
                                             data-p-price="{{ $product->price }}"
-                                            data-p-stock="{{ $product->stock ?? 0 }}"
+                                            data-p-stock="{{ $product->sizes->isNotEmpty() ? $product->sizes->sum('quantity') : ($product->stock ?? 0) }}"
                                             data-p-category="{{ $product->categoryModel->name ?? '—' }}"
                                             data-p-tags="{{ $product->tags ?? '' }}"
                                             data-p-badge="{{ $product->badge ?? '' }}"
                                             data-p-rating="{{ $product->rating ?? '' }}"
-                                            data-p-image="{{ asset('storage/' . $product->image) }}"
+                                            data-p-image="{{ storage_url($product->image) }}"
                                             data-p-gallery="{{ $product->gallery ?? '' }}"
                                             data-p-description="{{ htmlspecialchars($product->description ?? '', ENT_QUOTES, 'UTF-8') }}"
                                         >View</button>
@@ -517,7 +517,7 @@
                                             data-p-name="{{ htmlspecialchars($product->name, ENT_QUOTES, 'UTF-8') }}"
                                             data-p-brand="{{ htmlspecialchars($product->brand, ENT_QUOTES, 'UTF-8') }}"
                                             data-p-price="{{ $product->price }}"
-                                            data-p-stock="{{ $product->stock ?? 0 }}"
+                                            data-p-stock="{{ $product->sizes->isNotEmpty() ? $product->sizes->sum('quantity') : ($product->stock ?? 0) }}"
                                             data-p-category="{{ $product->category ?? '' }}"
                                             data-p-tags="{{ htmlspecialchars($product->tags ?? '', ENT_QUOTES, 'UTF-8') }}"
                                             data-p-badge="{{ htmlspecialchars($product->badge ?? '', ENT_QUOTES, 'UTF-8') }}"
@@ -648,6 +648,12 @@
 
             <script>
             (function() {
+                function resolveUrl(path) {
+                    if (!path) return '';
+                    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+                    return '{{ asset('storage') }}/' + path;
+                }
+
                 var viewModal = document.getElementById('product-view-modal');
                 var editModal = document.getElementById('product-edit-modal');
 
@@ -699,7 +705,7 @@
                         var galleryEl = document.getElementById('pv-gallery');
                         if (gallery) {
                             galleryEl.innerHTML = gallery.split('|').map(function(u) {
-                                return u.trim() ? '<img class="admin-product-modal__thumb" src="{{ asset('storage') }}/' + u.trim() + '" alt="">' : '';
+                                return u.trim() ? '<img class="admin-product-modal__thumb" src="' + resolveUrl(u.trim()) + '" alt="">' : '';
                             }).join('');
                         } else { galleryEl.innerHTML = ''; }
 
@@ -2070,6 +2076,12 @@
         }
     });
 
+    function resolveUrl(path) {
+        if (!path) return '';
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        return '{{ asset('storage') }}/' + path;
+    }
+
     function formatMoney(n) {
         return parseFloat(n).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
@@ -2078,7 +2090,7 @@
         var size = item.size ? 'Size: ' + item.size : '';
         var qty = 'Qty: ' + item.quantity;
         var meta = [size, qty].filter(Boolean).join(' · ');
-        var img = item.product_image ? '<img src="{{ asset('storage') }}/' + item.product_image + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">' : '<div style="width:48px;height:48px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="package" style="width:20px;height:20px;color:var(--muted);"></i></div>';
+        var img = item.product_image ? '<img src="' + resolveUrl(item.product_image) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">' : '<div style="width:48px;height:48px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="package" style="width:20px;height:20px;color:var(--muted);"></i></div>';
         return '<div class="odm-item">' +
             img +
             '<div class="odm-item__info">' +
