@@ -7,6 +7,15 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    private function getSizeStock(Product $product, string $size): ?int
+    {
+        if ($product->sizes && $product->sizes->count()) {
+            $found = $product->sizes->firstWhere('size', $size);
+            return $found ? (int) $found->quantity : null;
+        }
+        return $product->stock ?? null;
+    }
+
     public function index(Request $request)
     {
         $cart = session('cart', []);
@@ -23,29 +32,48 @@ class CartController extends Controller
             'slug' => 'required|string',
             'quantity' => 'nullable|integer|min:1',
             'size' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         $slug = $request->slug;
         $quantity = max(1, (int) $request->input('quantity', 1));
         $size = $request->input('size', 'M');
+        $submittedPrice = $request->input('price');
 
-        $product = Product::where('slug', $slug)->first();
+        $product = Product::with('sizes')->where('slug', $slug)->first();
 
         if (!$product) {
             return redirect()->back()->with('error', 'Product not found.');
         }
 
+        $price = (float) $product->price;
+        if ($submittedPrice !== null) {
+            $price = (float) $submittedPrice;
+        } elseif ($product->sizes && $product->sizes->count()) {
+            $found = $product->sizes->firstWhere('size', $size);
+            if ($found) {
+                $price = (float) $found->price;
+            }
+        }
+
+        $stock = $this->getSizeStock($product, $size);
         $cart = session('cart', []);
         $key = $slug . '|' . $size;
+        $currentQty = $cart[$key]['quantity'] ?? 0;
+        $newQty = $currentQty + $quantity;
+
+        if ($stock !== null && $newQty > $stock) {
+            return redirect()->back()->with('error', 'Only ' . $stock . ' item(s) available for size ' . $size . '.');
+        }
 
         if (isset($cart[$key])) {
-            $cart[$key]['quantity'] += $quantity;
+            $cart[$key]['quantity'] = $newQty;
         } else {
             $cart[$key] = [
                 'slug' => $product->slug,
                 'name' => $product->name,
                 'brand' => $product->brand,
-                'price' => (float) $product->price,
+                'price' => $price,
                 'image' => $product->image,
                 'quantity' => $quantity,
                 'size' => $size,
@@ -77,12 +105,25 @@ class CartController extends Controller
         $quantity = (int) $request->quantity;
         $cart = session('cart', []);
 
-        if (isset($cart[$key])) {
-            if ($quantity <= 0) {
-                unset($cart[$key]);
-            } else {
-                $cart[$key]['quantity'] = $quantity;
-            }
+        if (!isset($cart[$key])) {
+            return redirect()->route('cart')->with('error', 'Item not found in cart.');
+        }
+
+        $item = $cart[$key];
+        $product = Product::with('sizes')->where('slug', $item['slug'])->first();
+        if (!$product) {
+            return redirect()->route('cart')->with('error', 'Product not found.');
+        }
+
+        $stock = $this->getSizeStock($product, $item['size']);
+        if ($stock !== null && $quantity > $stock) {
+            return redirect()->route('cart')->with('error', 'Only ' . $stock . ' item(s) available for size ' . $item['size'] . '.');
+        }
+
+        if ($quantity <= 0) {
+            unset($cart[$key]);
+        } else {
+            $cart[$key]['quantity'] = $quantity;
         }
 
         session(['cart' => $cart]);

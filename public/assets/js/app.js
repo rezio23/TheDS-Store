@@ -554,25 +554,21 @@ $(function () {
             $button.attr('aria-pressed', String(isActive));
         });
 
-        const multiplier = Number($activeButton.attr('data-size-multiplier')) || 1;
+        const sizePrice = Number($activeButton.attr('data-size-price'));
         const $price = $('.product-detail-price');
-        const basePrice = Number($price.attr('data-base-price'));
 
-        if ($price.length && Number.isFinite(basePrice) && multiplier !== 1) {
-            const newPrice = basePrice * multiplier;
-            $price.attr('data-size-price', newPrice.toFixed(2));
-            $price.text('$ ' + newPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-        } else if ($price.length && Number.isFinite(basePrice)) {
-            $price.attr('data-size-price', basePrice.toFixed(2));
-            $price.text('$ ' + basePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        if ($price.length && Number.isFinite(sizePrice)) {
+            $price.attr('data-size-price', sizePrice.toFixed(2));
+            $price.text('$ ' + sizePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            $('#detail-cart-price').val(sizePrice);
         }
     };
 
     $productSizeGroups.each(function () {
         const $group = $(this);
-        const $initialSize = $group.find('[data-product-size-option].is-active').first();
-        const $firstSize = $group.find('[data-product-size-option]').first();
-        const $sizeToUse = $initialSize.length ? $initialSize : $firstSize;
+        const $initialSize = $group.find('[data-product-size-option].is-active:not([disabled])').first();
+        const $firstAvailable = $group.find('[data-product-size-option]:not([disabled])').first();
+        const $sizeToUse = $initialSize.length ? $initialSize : $firstAvailable;
 
         if ($sizeToUse.length) {
             setActiveProductSize($sizeToUse);
@@ -581,7 +577,7 @@ $(function () {
         $group.on('click', function (event) {
             const $button = $(event.target).closest('[data-product-size-option]');
 
-            if (!$button.length || !$.contains($group[0], $button[0])) {
+            if (!$button.length || !$.contains($group[0], $button[0]) || $button.is('[disabled]')) {
                 return;
             }
 

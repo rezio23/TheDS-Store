@@ -18,6 +18,9 @@
         }
 
         function getProductSizes($product) {
+            if ($product->sizes && $product->sizes->count()) {
+                return $product->sizes->pluck('size')->toArray();
+            }
             $tags = array_map('strtolower', $product->tags ?? []);
             if (in_array('fragrance', $tags, true)) return ['30ML', '50ML', '90ML', '100ML', '150ML', 'Refill'];
             if (in_array('bag', $tags, true)) return ['Mini', 'Small', 'Medium', 'Large', 'XL', 'One Size'];
@@ -26,6 +29,9 @@
         }
 
         function getDefaultActiveSize($product, $sizes) {
+            if ($product->sizes && $product->sizes->count()) {
+                return $product->sizes->first()->size ?? 'M';
+            }
             $tags = array_map('strtolower', $product->tags ?? []);
             if (in_array('fragrance', $tags, true)) return '100ML';
             if (in_array('bag', $tags, true)) return 'Medium';
@@ -33,17 +39,31 @@
             return 'M';
         }
 
-        function getSizePriceMultiplier($size) {
+        function getSizePrice($product, $size) {
+            if ($product->sizes && $product->sizes->count()) {
+                $found = $product->sizes->firstWhere('size', $size);
+                return $found ? (float) $found->price : (float) $product->price;
+            }
+            $multiplier = 1.00;
             $fragranceMap = ['30ML' => 0.50, '50ML' => 0.70, '90ML' => 0.90, '100ML' => 1.00, '150ML' => 1.30, 'Refill' => 0.60];
             $bagMap = ['Mini' => 0.70, 'Small' => 0.85, 'Medium' => 1.00, 'Large' => 1.20, 'XL' => 1.40, 'One Size' => 1.00];
-            if (isset($fragranceMap[$size])) return $fragranceMap[$size];
-            if (isset($bagMap[$size])) return $bagMap[$size];
-            return 1.00;
+            if (isset($fragranceMap[$size])) $multiplier = $fragranceMap[$size];
+            elseif (isset($bagMap[$size])) $multiplier = $bagMap[$size];
+            return (float) $product->price * $multiplier;
+        }
+
+        function getSizeQuantity($product, $size) {
+            if ($product->sizes && $product->sizes->count()) {
+                $found = $product->sizes->firstWhere('size', $size);
+                return $found ? (int) $found->quantity : null;
+            }
+            return $product->stock ?? null;
         }
 
         $product->category = getProductCategory($product);
         $sizes = getProductSizes($product);
         $activeSize = getDefaultActiveSize($product, $sizes);
+        $activeSizePrice = getSizePrice($product, $activeSize);
         $gallery = array_filter(explode('|', $product->gallery ?? ''));
         $isFavorited = Auth::check() ? \App\Models\Favorite::where('user_id', Auth::id())->where('product_id', $product->id)->exists() : false;
     @endphp
@@ -83,6 +103,7 @@
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="slug" value="{{ $product->slug }}">
                         <input type="hidden" name="size" value="{{ $activeSize }}" id="detail-cart-size">
+                        <input type="hidden" name="price" value="{{ $activeSizePrice }}" id="detail-cart-price">
                         <button class="product-primary-button" type="submit" data-add-to-cart>
                             <span>Add to Cart</span>
                         </button>
@@ -100,14 +121,22 @@
                 <h1 id="product-title">{{ $product->name }}</h1>
                 <p class="product-detail-description">{{ $product->description }}</p>
                 <p class="product-detail-category">{{ $product->category }}</p>
-                <p class="product-detail-price" data-base-price="{{ $product->price }}" data-size-price="{{ number_format($product->price * getSizePriceMultiplier($activeSize), 2) }}">$ {{ number_format($product->price * getSizePriceMultiplier($activeSize), 2) }}</p>
+                <p class="product-detail-price" data-base-price="{{ $product->price }}" data-size-price="{{ number_format($activeSizePrice, 2) }}">$ {{ number_format($activeSizePrice, 2) }}</p>
 
                 <section class="product-option-group" aria-labelledby="product-size-title">
                     <h2 id="product-size-title">Size</h2>
                     <div class="product-size-grid" data-product-size-group>
                         @foreach ($sizes as $size)
-                            <button class="{{ $size === $activeSize ? 'is-active' : '' }}" type="button" data-product-size-option data-size-value="{{ $size }}" data-size-multiplier="{{ getSizePriceMultiplier($size) }}" aria-pressed="{{ $size === $activeSize ? 'true' : 'false' }}">
+                            @php
+                                $sizePrice = getSizePrice($product, $size);
+                                $sizeQty = getSizeQuantity($product, $size);
+                                $outOfStock = $sizeQty !== null && $sizeQty <= 0;
+                            @endphp
+                            <button class="{{ $size === $activeSize ? 'is-active' : '' }} {{ $outOfStock ? 'is-disabled' : '' }}" type="button" data-product-size-option data-size-value="{{ $size }}" data-size-price="{{ number_format($sizePrice, 2) }}" data-size-qty="{{ $sizeQty }}" {{ $outOfStock ? 'disabled' : '' }} aria-pressed="{{ $size === $activeSize ? 'true' : 'false' }}">
                                 {{ $size }}
+                                @if ($sizeQty !== null)
+                                    <small>({{ $sizeQty }} left)</small>
+                                @endif
                             </button>
                         @endforeach
                     </div>

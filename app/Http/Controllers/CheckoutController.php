@@ -21,6 +21,15 @@ class CheckoutController extends Controller
     {
         $this->telegram = $telegram;
     }
+    private function getSizeStock(\App\Models\Product $product, string $size): ?int
+    {
+        if ($product->sizes && $product->sizes->count()) {
+            $found = $product->sizes->firstWhere('size', $size);
+            return $found ? (int) $found->quantity : null;
+        }
+        return $product->stock ?? null;
+    }
+
     private function getTotals(array $cart, array $shipping = [], ?string $promoCode = null): array
     {
         $subtotal = array_sum(array_map(function ($item) {
@@ -183,6 +192,17 @@ class CheckoutController extends Controller
 
         if (empty($cart) || empty($shipping)) {
             return redirect()->route('cart')->with('error', 'Invalid checkout state.');
+        }
+
+        foreach ($cart as $key => $item) {
+            $product = \App\Models\Product::with('sizes')->where('slug', $item['slug'])->first();
+            if (!$product) {
+                return redirect()->route('cart')->with('error', 'Product not found: ' . $item['name']);
+            }
+            $stock = $this->getSizeStock($product, $item['size']);
+            if ($stock !== null && $item['quantity'] > $stock) {
+                return redirect()->route('cart')->with('error', 'Only ' . $stock . ' item(s) available for size ' . $item['size'] . ' of ' . $item['name'] . '. Please update your cart.');
+            }
         }
 
         $cardNumber = trim((string) $request->input('card_number', ''));

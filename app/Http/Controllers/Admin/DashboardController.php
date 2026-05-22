@@ -89,7 +89,7 @@ class DashboardController extends Controller
         $selectedCategory = $request->get('category', '');
         $selectedSort = $request->get('sort', 'number_desc');
 
-        $productsQuery = Product::with('categoryModel');
+        $productsQuery = Product::with(['categoryModel', 'sizes']);
         if ($selectedCategory !== '') {
             $productsQuery->where('category', $selectedCategory);
         }
@@ -373,7 +373,7 @@ class DashboardController extends Controller
         $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($data['name'])), '-');
         $imagePath = $data['image_url'];
 
-        Product::create([
+        $product = Product::create([
             'slug' => $slug,
             'name' => $data['name'],
             'brand' => $data['brand'],
@@ -386,6 +386,20 @@ class DashboardController extends Controller
             'gallery' => $data['gallery'] ?? '',
             'category' => $data['category'] ?? '',
         ]);
+
+        if ($request->has('size_name')) {
+            foreach ($request->input('size_name') as $i => $sizeName) {
+                $sizePrice = $request->input('size_price')[$i] ?? null;
+                $sizeQty = $request->input('size_quantity')[$i] ?? 0;
+                if (!empty($sizeName) && is_numeric($sizePrice)) {
+                    $product->sizes()->create([
+                        'size' => $sizeName,
+                        'price' => $sizePrice,
+                        'quantity' => (int) $sizeQty,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('admin.dashboard', ['tab' => 'products']);
     }
@@ -443,6 +457,22 @@ class DashboardController extends Controller
         }
 
         Product::where('id', $productId)->update($updateData);
+
+        \App\Models\ProductSize::where('product_id', $productId)->delete();
+        if ($request->has('size_name')) {
+            foreach ($request->input('size_name') as $i => $sizeName) {
+                $sizePrice = $request->input('size_price')[$i] ?? null;
+                $sizeQty = $request->input('size_quantity')[$i] ?? 0;
+                if (!empty($sizeName) && is_numeric($sizePrice)) {
+                    \App\Models\ProductSize::create([
+                        'product_id' => $productId,
+                        'size' => $sizeName,
+                        'price' => $sizePrice,
+                        'quantity' => (int) $sizeQty,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('admin.dashboard', ['tab' => 'products']);
     }

@@ -23,6 +23,7 @@ class Product extends Model
         'tags',
         'category',
         'stock',
+        'size',
     ];
 
     protected function casts(): array
@@ -43,6 +44,11 @@ class Product extends Model
     public function favorites()
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    public function sizes()
+    {
+        return $this->hasMany(ProductSize::class);
     }
 
     public function getTagsArrayAttribute(): array

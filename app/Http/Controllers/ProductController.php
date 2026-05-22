@@ -9,7 +9,7 @@ class ProductController extends Controller
 {
     public function show(Request $request, $slug)
     {
-        $product = Product::where('slug', $slug)->firstOrFail();
+        $product = Product::with('sizes')->where('slug', $slug)->firstOrFail();
         $product->tags = array_map('trim', explode(',', $product->tags ?? ''));
 
         $relatedProducts = Product::where('id', '!=', $product->id)

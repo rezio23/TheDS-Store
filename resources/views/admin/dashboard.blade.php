@@ -308,8 +308,8 @@
                             <input type="text" id="prod-rating" name="rating" placeholder="e.g. 4.5" maxlength="10" pattern="[0-5](\.[0-9])?" title="Rating from 0 to 5">
                         </div>
                         <div class="admin-form-group admin-form-group--full">
-                            <label for="prod-image">Product Image URL</label>
-                            <input type="url" id="prod-image" name="image_url" placeholder="https://example.com/image.jpg" required maxlength="2048">
+                            <label for="prod-image">Image URL</label>
+                            <input type="url" id="prod-image" name="image" placeholder="https://example.com/image.png" required maxlength="2000">
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label>Gallery Images</label>
@@ -489,7 +489,7 @@
                             <tr>
                                 <td>{{ $productIndex++ }}</td>
                                 <td>{{ $product->id }}</td>
-                                <td><img src="{{ storage_url($product->image) }}" alt="" class="admin-product-thumb"></td>
+                                <td><img src="{{ asset('storage/' . $product->image) }}" alt="" class="admin-product-thumb"></td>
                                 <td>{{ $product->name }}</td>
                                 <td>{{ $product->brand }}</td>
                                 <td>${{ number_format($product->price, 2) }}</td>
@@ -508,7 +508,7 @@
                                             data-p-tags="{{ $product->tags ?? '' }}"
                                             data-p-badge="{{ $product->badge ?? '' }}"
                                             data-p-rating="{{ $product->rating ?? '' }}"
-                                            data-p-image="{{ storage_url($product->image) }}"
+                                            data-p-image="{{ asset('storage/' . $product->image) }}"
                                             data-p-gallery="{{ $product->gallery ?? '' }}"
                                             data-p-description="{{ htmlspecialchars($product->description ?? '', ENT_QUOTES, 'UTF-8') }}"
                                         >View</button>
@@ -578,7 +578,7 @@
                     <div class="admin-product-modal__info">
                         <h2>Edit Product</h2>
                     </div>
-                    <form method="post" action="{{ route('admin.dashboard') }}?tab=products" id="product-edit-form" enctype="multipart/form-data">
+                    <form method="post" action="{{ route('admin.dashboard') }}?tab=products" id="product-edit-form">
                         @csrf
                         <input type="hidden" name="product_id" id="pe-id">
                         <div class="admin-form-grid" style="grid-template-columns: 1fr 1fr; margin-top: 18px;">
@@ -623,15 +623,8 @@
                                 <input type="text" name="rating" id="pe-rating" placeholder="e.g. 4.5" maxlength="10" pattern="[0-5](\.[0-9])?" title="Rating from 0 to 5">
                             </div>
                             <div class="admin-form-group admin-form-group--full">
-                                <label>Current Image</label>
-                                <div id="pe-image-preview" style="margin-bottom:8px;">
-                                    <img src="" alt="Current image" style="max-height:80px;border-radius:8px;display:none;border:1px solid var(--hairline);">
-                                    <p style="font-size:0.75rem;color:var(--muted);margin:4px 0 0;"></p>
-                                </div>
-                                <label for="pe-image">Replace Image (upload)</label>
-                                <input type="file" name="image" id="pe-image" accept="image/jpeg,image/png,image/jpg,image/webp">
-                                <label for="pe-image-url" style="margin-top:8px;display:block;">Or Image URL</label>
-                                <input type="url" name="image_url" id="pe-image-url" placeholder="https://example.com/image.jpg" maxlength="2048">
+                                <label>Image URL</label>
+                                <input type="url" name="image" id="pe-image" required maxlength="2000">
                             </div>
                             <div class="admin-form-group admin-form-group--full">
                                 <label>Gallery Images (pipe-separated URLs)</label>
@@ -639,11 +632,11 @@
                             </div>
                             <div class="admin-form-group admin-form-group--full">
                                 <label>Tags (comma-separated)</label>
-                                <input type="text" name="tags" id="pe-tags" placeholder="e.g. sneaker, man, popular" maxlength="500">
+                                <input type="text" name="tags" id="pe-tags" placeholder="e.g. sneaker, man, popular">
                             </div>
                             <div class="admin-form-group admin-form-group--full">
                                 <label>Description</label>
-                                <textarea name="description" id="pe-description" rows="3" maxlength="2000"></textarea>
+                                <textarea name="description" id="pe-description" rows="3"></textarea>
                             </div>
                         </div>
                         <div class="admin-form-actions" style="margin-top: 18px;">
@@ -706,10 +699,7 @@
                         var galleryEl = document.getElementById('pv-gallery');
                         if (gallery) {
                             galleryEl.innerHTML = gallery.split('|').map(function(u) {
-                                var src = u.trim();
-                                if (!src) return '';
-                                if (!src.match(/^https?:\/\//)) src = '{{ asset('storage') }}/' + src;
-                                return '<img class="admin-product-modal__thumb" src="' + src + '" alt="">';
+                                return u.trim() ? '<img class="admin-product-modal__thumb" src="{{ asset('storage') }}/' + u.trim() + '" alt="">' : '';
                             }).join('');
                         } else { galleryEl.innerHTML = ''; }
 
@@ -729,20 +719,7 @@
                         document.getElementById('pe-category').value = btn.getAttribute('data-p-category');
                         document.getElementById('pe-badge').value = btn.getAttribute('data-p-badge');
                         document.getElementById('pe-rating').value = btn.getAttribute('data-p-rating');
-                        var imgPath = btn.getAttribute('data-p-image');
-                        var isUrl = imgPath && /^https?:\/\//.test(imgPath);
-                        var previewImg = document.querySelector('#pe-image-preview img');
-                        var previewText = document.querySelector('#pe-image-preview p');
-                        if (imgPath) {
-                            previewImg.src = isUrl ? imgPath : '{{ asset('storage') }}/' + imgPath;
-                            previewImg.style.display = 'block';
-                            previewText.textContent = imgPath;
-                        } else {
-                            previewImg.style.display = 'none';
-                            previewText.textContent = 'No image set';
-                        }
-                        document.getElementById('pe-image').value = '';
-                        document.getElementById('pe-image-url').value = isUrl ? imgPath : '';
+                        document.getElementById('pe-image').value = btn.getAttribute('data-p-image');
                         document.getElementById('pe-gallery').value = btn.getAttribute('data-p-gallery');
                         document.getElementById('pe-tags').value = btn.getAttribute('data-p-tags');
                         document.getElementById('pe-description').value = btn.getAttribute('data-p-description');
@@ -977,11 +954,11 @@
                     <div class="admin-form-grid">
                         <div class="admin-form-group admin-form-group--full">
                             <label for="ann-subject">Subject</label>
-                            <input type="text" id="ann-subject" name="subject" placeholder="e.g. New Collection Launch" maxlength="120" minlength="2" required>
+                            <input type="text" id="ann-subject" name="subject" placeholder="e.g. New Collection Launch" maxlength="120" required>
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label for="ann-message">Message</label>
-                            <textarea id="ann-message" name="message" rows="6" placeholder="Write your announcement here..." maxlength="2000" minlength="10" required></textarea>
+                            <textarea id="ann-message" name="message" rows="6" placeholder="Write your announcement here..." maxlength="2000" required></textarea>
                         </div>
                         <div class="admin-form-group admin-form-group--full">
                             <label class="help-request-form__label" for="ann-file">Attachment (optional)</label>
@@ -1045,7 +1022,7 @@
                     <div class="admin-form-grid">
                         <div class="admin-form-group">
                             <label for="promo-code">Promo Code</label>
-                            <input type="text" id="promo-code" name="code" placeholder="e.g. SUMMER25" required minlength="2" maxlength="255" pattern="[A-Za-z0-9]+" title="Letters and numbers only">
+                            <input type="text" id="promo-code" name="code" placeholder="e.g. SUMMER25" required>
                         </div>
                         <div class="admin-form-group">
                             <label>Discount Type</label>
@@ -1063,15 +1040,15 @@
                         </div>
                         <div class="admin-form-group">
                             <label for="promo-value">Discount Value</label>
-                            <input type="number" id="promo-value" name="value" step="0.01" min="0.01" max="999999.99" placeholder="e.g. 25 for 25% or $25" required>
+                            <input type="number" id="promo-value" name="value" step="0.01" min="0" placeholder="e.g. 25 for 25% or $25" required>
                         </div>
                         <div class="admin-form-group">
                             <label for="promo-min-order">Minimum Order ($)</label>
-                            <input type="number" id="promo-min-order" name="min_order" step="0.01" min="0" max="999999.99" placeholder="Optional">
+                            <input type="number" id="promo-min-order" name="min_order" step="0.01" min="0" placeholder="Optional">
                         </div>
                         <div class="admin-form-group">
                             <label for="promo-max-uses">Max Uses</label>
-                            <input type="number" id="promo-max-uses" name="max_uses" min="1" max="999999" placeholder="Optional">
+                            <input type="number" id="promo-max-uses" name="max_uses" min="1" placeholder="Optional">
                         </div>
                         <div class="admin-form-group">
                             <label for="promo-starts">Starts At</label>
@@ -1902,14 +1879,12 @@
                 '<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-start;">' +
                     '<form method="post" action="' + adminUrl + '?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">' +
 
-
-
-
                     '<input type="hidden" name="_token" value="' + csrfToken + '">' +
                         '<input type="hidden" name="order_id" value="' + order.id + '">' +
                         '<div class="admin-select-control" data-admin-select>' +
                             '<button type="button" class="admin-select-toggle" data-admin-select-toggle aria-expanded="false" aria-haspopup="listbox" aria-controls="order-status-' + order.id + '">' +
-                                '<span data-admin-select-current>' + statusLabel + '</span>' +
+                   
+                            '<span data-admin-select-current>' + statusLabel + '</span>' +
                                 '<i data-lucide="chevron-down"></i>' +
                             '</button>' +
                             '<div class="admin-select-menu" id="order-status-' + order.id + '" role="listbox" data-admin-select-menu>' +
@@ -2103,7 +2078,7 @@
         var size = item.size ? 'Size: ' + item.size : '';
         var qty = 'Qty: ' + item.quantity;
         var meta = [size, qty].filter(Boolean).join(' · ');
-        var img = item.product_image ? '<img src="' + item.product_image + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">' : '<div style="width:48px;height:48px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="package" style="width:20px;height:20px;color:var(--muted);"></i></div>';
+        var img = item.product_image ? '<img src="{{ asset('storage') }}/' + item.product_image + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">' : '<div style="width:48px;height:48px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="package" style="width:20px;height:20px;color:var(--muted);"></i></div>';
         return '<div class="odm-item">' +
             img +
             '<div class="odm-item__info">' +
