@@ -337,6 +337,20 @@
                             <textarea id="prod-description" name="description" rows="3" maxlength="2000"></textarea>
                         </div>
                     </div>
+                    <div class="admin-form-group admin-form-group--full" style="margin-top: 8px;">
+                        <label>Sizes</label>
+                        <div id="size-list-add">
+                            <div class="size-row" style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
+                                <input type="text" name="size_name[]" placeholder="Size (e.g. 38)" style="flex:1;min-width:0;" required>
+                                <input type="number" name="size_price[]" placeholder="Price" step="0.01" min="0.01" style="flex:1;min-width:0;" required>
+                                <input type="number" name="size_quantity[]" placeholder="Qty" min="0" style="width:90px;min-width:0;" required>
+                                <button type="button" class="admin-btn admin-btn--danger admin-btn--small size-remove">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="admin-btn admin-btn--small" id="size-add-btn">
+                            <i data-lucide="plus"></i> Add Size
+                        </button>
+                    </div>
                     <div class="admin-form-actions">
                         <button type="submit" name="add_product" class="admin-btn">Save Product</button>
                     </div>
@@ -362,6 +376,19 @@
                         });
                         document.getElementById('gallery-list').addEventListener('click', function(e) {
                             if (e.target.classList.contains('gallery-remove')) {
+                                e.target.parentElement.remove();
+                            }
+                        });
+
+                        document.getElementById('size-add-btn').addEventListener('click', function() {
+                            var row = document.createElement('div');
+                            row.className = 'size-row';
+                            row.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;align-items:center;';
+                            row.innerHTML = '<input type="text" name="size_name[]" placeholder="Size (e.g. 38)" style="flex:1;min-width:0;" required><input type="number" name="size_price[]" placeholder="Price" step="0.01" min="0.01" style="flex:1;min-width:0;" required><input type="number" name="size_quantity[]" placeholder="Qty" min="0" style="width:90px;min-width:0;" required><button type="button" class="admin-btn admin-btn--danger admin-btn--small size-remove">Remove</button>';
+                            document.getElementById('size-list-add').appendChild(row);
+                        });
+                        document.getElementById('size-list-add').addEventListener('click', function(e) {
+                            if (e.target.classList.contains('size-remove')) {
                                 e.target.parentElement.remove();
                             }
                         });
@@ -529,6 +556,7 @@
                                             data-p-image="{{ htmlspecialchars($product->image ?? '', ENT_QUOTES, 'UTF-8') }}"
                                             data-p-gallery="{{ htmlspecialchars($product->gallery ?? '', ENT_QUOTES, 'UTF-8') }}"
                                             data-p-description="{{ htmlspecialchars($product->description ?? '', ENT_QUOTES, 'UTF-8') }}"
+                                            data-p-sizes="{{ htmlspecialchars($product->sizes->map(fn($s) => ['size' => $s->size, 'price' => $s->price, 'quantity' => $s->quantity])->toJson(), ENT_QUOTES, 'UTF-8') }}"
                                         >Edit</button>
                                         <form method="post" action="{{ route('admin.dashboard') }}?tab=products" onsubmit="return confirm('Delete this product?');" style="display:inline;">
                                             @csrf
@@ -643,6 +671,13 @@
                                 <textarea name="description" id="pe-description" rows="3"></textarea>
                             </div>
                         </div>
+                        <div class="admin-form-group admin-form-group--full" style="margin-top: 8px;">
+                            <label>Sizes</label>
+                            <div id="size-list-edit"></div>
+                            <button type="button" class="admin-btn admin-btn--small" id="size-edit-add-btn">
+                                <i data-lucide="plus"></i> Add Size
+                            </button>
+                        </div>
                         <div class="admin-form-actions" style="margin-top: 18px;">
                             <button type="submit" name="edit_product" class="admin-btn">Save Changes</button>
                         </div>
@@ -718,6 +753,31 @@
                     });
                 });
 
+                function makeSizeRow(size, price, qty) {
+                    return '<div class="size-row" style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">' +
+                        '<input type="text" name="size_name[]" placeholder="Size (e.g. 38)" value="' + (size ? escapeHtml(size) : '') + '" style="flex:1;min-width:0;" required>' +
+                        '<input type="number" name="size_price[]" placeholder="Price" step="0.01" min="0.01" value="' + (price ? price : '') + '" style="flex:1;min-width:0;" required>' +
+                        '<input type="number" name="size_quantity[]" placeholder="Qty" min="0" value="' + (qty !== undefined ? qty : '') + '" style="width:90px;min-width:0;" required>' +
+                        '<button type="button" class="admin-btn admin-btn--danger admin-btn--small size-remove">Remove</button>' +
+                        '</div>';
+                }
+
+                function escapeHtml(text) {
+                    if (!text) return '';
+                    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                }
+
+                document.getElementById('size-edit-add-btn').addEventListener('click', function() {
+                    var div = document.createElement('div');
+                    div.innerHTML = makeSizeRow('', '', '');
+                    document.getElementById('size-list-edit').appendChild(div.firstElementChild);
+                });
+                document.getElementById('size-list-edit').addEventListener('click', function(e) {
+                    if (e.target.classList.contains('size-remove')) {
+                        e.target.parentElement.remove();
+                    }
+                });
+
                 // Edit
                 document.querySelectorAll('[data-product-edit]').forEach(function(btn) {
                     btn.addEventListener('click', function() {
@@ -743,6 +803,19 @@
                             if (opt.getAttribute('data-value') === catVal) catLabel = opt.textContent;
                         });
                         document.getElementById('pe-cat-label').textContent = catLabel;
+
+                        // Populate sizes
+                        var sizesJson = btn.getAttribute('data-p-sizes');
+                        var sizesList = document.getElementById('size-list-edit');
+                        sizesList.innerHTML = '';
+                        if (sizesJson) {
+                            try {
+                                var sizes = JSON.parse(sizesJson);
+                                sizes.forEach(function(s) {
+                                    sizesList.innerHTML += makeSizeRow(s.size, s.price, s.quantity);
+                                });
+                            } catch (e) {}
+                        }
 
                         if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: editModal.querySelectorAll('i[data-lucide]') });
                         editModal.classList.add('is-open');

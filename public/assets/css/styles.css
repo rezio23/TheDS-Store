@@ -5743,12 +5743,16 @@ body.shop-page {
     padding: clamp(28px, 3vw, 42px);
     border-radius: 16px;
     background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.08);
 }
 
 .payment-summary-card {
     padding: clamp(28px, 3vw, 42px);
     border-radius: 16px;
     background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.08);
     display: grid;
     gap: clamp(18px, 2vw, 24px);
     align-content: start;
@@ -5761,52 +5765,57 @@ body.shop-page {
     font-weight: 400;
 }
 
-/* Payment tabs — minimal like Nike/Apple checkout */
+/* Payment tabs — bordered cards like global site filters */
 .payment-step-tabs {
     display: flex;
-    align-items: center;
-    gap: 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    align-items: stretch;
+    gap: 10px;
     margin-bottom: clamp(18px, 2vw, 24px);
+    flex-wrap: wrap;
 }
 
 .payment-step-tab {
     position: relative;
     flex: 1 1 0;
-    min-height: 44px;
-    display: grid;
-    place-items: center;
-    border: 0;
+    min-height: 52px;
+    min-width: 100px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
     background: transparent;
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--muted);
     font-family: var(--font-main);
-    font-size: clamp(0.7rem, 0.8vw, 0.88rem);
+    font-size: clamp(0.72rem, 0.82vw, 0.88rem);
     font-weight: 400;
     text-align: center;
     cursor: pointer;
-    transition: color 180ms ease;
-    padding: 10px 8px;
+    transition: background 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+    padding: 10px 12px;
     line-height: 1.2;
 }
 
 .payment-step-tab:hover {
+    background: var(--soft);
     color: var(--ink);
+    border-color: rgba(192, 107, 0, 0.5);
 }
 
 .payment-step-tab.is-active {
-    color: var(--ink);
+    background: rgba(192, 107, 0, 0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 0 1.5px var(--accent);
     font-weight: 400;
 }
 
-.payment-step-tab.is-active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 12px;
-    right: 12px;
-    height: 2px;
-    background: var(--ink);
-    border-radius: 2px 2px 0 0;
+.payment-step-tab i,
+.payment-step-tab svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
 
 .payment-tab-panels {
@@ -5827,7 +5836,8 @@ body.shop-page {
 }
 
 .payment-method-text {
-    margin: 0 0 clamp(16px, 2vw, 22px);
+    margin: 0 auto clamp(16px, 2vw, 22px);
+    max-width: 420px;
     font-size: clamp(0.78rem, 0.88vw, 0.95rem);
     line-height: 1.55;
     color: rgba(0, 0, 0, 0.62);
@@ -5839,21 +5849,22 @@ body.shop-page {
     align-items: center;
     justify-content: center;
     border: 0;
-    border-radius: 8px;
-    background: var(--ink);
+    border-radius: 10px;
+    background: var(--accent);
     color: #fff;
     font-family: var(--font-main);
     font-size: clamp(0.78rem, 0.88vw, 0.95rem);
     font-weight: 400;
     cursor: pointer;
-    transition: opacity 180ms ease;
+    transition: transform 180ms ease, filter 180ms ease;
     padding: 0 28px;
     width: 100%;
     line-height: 1.2;
 }
 
 .payment-action-btn:hover:not(:disabled) {
-    opacity: 0.88;
+    transform: translateY(-1px);
+    filter: brightness(1.08);
 }
 
 .payment-action-btn:disabled {
@@ -5883,60 +5894,6 @@ body.shop-page {
     font-size: 0.82rem;
     text-align: center;
     display: none;
-}
-
-/* Card form — clean minimal inputs */
-.payment-card-form {
-    display: grid;
-    gap: clamp(16px, 2vw, 22px);
-}
-
-.payment-form-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(14px, 1.5vw, 22px);
-}
-
-.payment-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.payment-form-group--wide {
-    grid-column: 1 / -1;
-}
-
-.payment-form-group label {
-    margin: 0;
-    font-size: clamp(0.72rem, 0.82vw, 0.88rem);
-    line-height: 1.2;
-    font-weight: 400;
-    color: rgba(0, 0, 0, 0.72);
-}
-
-.payment-form-group input {
-    width: 100%;
-    min-height: 44px;
-    padding: 0 14px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 6px;
-    background: #fff;
-    color: var(--ink);
-    font-family: var(--font-primary);
-    font-size: 0.82rem;
-    font-weight: 800;
-    outline: 0;
-    transition: border-color 180ms ease;
-}
-
-.payment-form-group input::placeholder {
-    color: rgba(0, 0, 0, 0.28);
-    font-weight: 400;
-}
-
-.payment-form-group input:focus {
-    border-color: var(--ink);
 }
 
 /* Legacy payment styles (kept for compatibility where referenced elsewhere) */
@@ -6061,10 +6018,9 @@ body.shop-page {
 
 .payment-form-group label {
     margin: 0;
-    font-size: clamp(0.78rem, 0.88vw, 0.95rem);
+    font-size: clamp(0.82rem, 0.95vw, 1.05rem);
     line-height: 1.2;
     font-weight: 400;
-    color: rgba(0, 0, 0, 0.72);
 }
 
 .payment-form-group input {
@@ -6264,20 +6220,17 @@ body.shop-page {
     }
 
     .payment-step-tab {
-        padding: 8px 4px;
-        font-size: 0.65rem;
-    }
-
-    .payment-step-tab.is-active::after {
-        left: 4px;
-        right: 4px;
+        padding: 8px 10px;
+        font-size: 0.68rem;
+        min-height: 44px;
     }
 }
 
 @media (max-width: 560px) {
     .payment-step-tab {
-        padding: 8px 4px;
-        font-size: 0.62rem;
+        padding: 8px 10px;
+        font-size: 0.65rem;
+        min-height: 44px;
     }
 }
 
@@ -6619,6 +6572,11 @@ body.shop-page {
     .payment-aba-btn,
     .payment-action-btn {
         width: 100%;
+    }
+
+    #aba-khqr-qr {
+        width: clamp(200px, 60vw, 260px);
+        height: clamp(200px, 60vw, 260px);
     }
 }
 

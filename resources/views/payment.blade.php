@@ -36,15 +36,15 @@
                     <h2 class="payment-card-title">Payment Method</h2>
 
                     <div class="payment-step-tabs" role="tablist" aria-label="Payment methods">
-                        <button type="button" class="payment-step-tab is-active" role="tab" aria-selected="true" aria-controls="panel-khqr" id="tab-khqr">KHQR</button>
-                        <button type="button" class="payment-step-tab" role="tab" aria-selected="false" aria-controls="panel-card" id="tab-card" tabindex="-1">Card</button>
-                        <button type="button" class="payment-step-tab" role="tab" aria-selected="false" aria-controls="panel-paypal" id="tab-paypal" tabindex="-1">PayPal</button>
-                        <button type="button" class="payment-step-tab" role="tab" aria-selected="false" aria-controls="panel-aba" id="tab-aba" tabindex="-1">ABA PayWay</button>
+                        <button type="button" class="payment-step-tab is-active" role="tab" aria-selected="true" aria-controls="panel-khqr" id="tab-khqr"><i data-lucide="qr-code"></i> KHQR</button>
+                        <button type="button" class="payment-step-tab" role="tab" aria-selected="false" aria-controls="panel-card" id="tab-card" tabindex="-1"><i data-lucide="credit-card"></i> Card</button>
+                        <button type="button" class="payment-step-tab" role="tab" aria-selected="false" aria-controls="panel-paypal" id="tab-paypal" tabindex="-1"><i data-lucide="wallet"></i> PayPal</button>
+                        <button type="button" class="payment-step-tab" role="tab" aria-selected="false" aria-controls="panel-aba" id="tab-aba" tabindex="-1"><i data-lucide="landmark"></i> ABA PayWay</button>
                     </div>
 
                     <div class="payment-tab-panels">
                         <div id="panel-khqr" class="payment-tab-panel is-active" role="tabpanel" aria-labelledby="tab-khqr">
-                            <div class="payment-method-body">
+                            <div class="payment-method-body payment-khqr">
                                 <p class="payment-method-text">Pay securely with your Bakong app or any supported banking app using KHQR.</p>
                                 <button type="button" class="payment-action-btn" id="open-khqr-modal" aria-haspopup="dialog">Show KHQR Code</button>
                             </div>
@@ -82,7 +82,7 @@
                         </div>
 
                         <div id="panel-paypal" class="payment-tab-panel" role="tabpanel" aria-labelledby="tab-paypal" hidden>
-                            <div class="payment-method-body">
+                            <div class="payment-method-body payment-paypal">
                                 <p class="payment-method-text">Pay securely with your PayPal account.</p>
                                 <div id="paypal-button-container"></div>
                             </div>
@@ -90,8 +90,8 @@
 
                         <div id="panel-aba" class="payment-tab-panel" role="tabpanel" aria-labelledby="tab-aba" hidden>
                             <div class="payment-method-body">
-                                <p class="payment-method-text">Pay securely with your ABA Bank account via PayWay.</p>
-                                <button type="button" class="payment-action-btn" id="aba-pay-btn">Pay with ABA</button>
+                                <p class="payment-method-text">Pay securely with your ABA Bank account via PayWay KHQR.</p>
+                                <button type="button" class="payment-action-btn" id="aba-pay-btn" aria-haspopup="dialog">Show ABA KHQR</button>
                                 <p id="aba-pay-error" class="payment-method-error"></p>
                             </div>
                         </div>
@@ -203,6 +203,24 @@
             <button type="button" class="khqr-modal-done" id="khqr-modal-done">Done</button>
         </div>
     </div>
+
+    <div class="khqr-overlay" id="aba-overlay" role="dialog" aria-modal="true" aria-labelledby="aba-modal-title" tabindex="-1">
+        <div class="khqr-modal">
+            <button type="button" class="khqr-modal-close" id="close-aba-modal" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h2 id="aba-modal-title" class="khqr-modal-title">Scan to Pay with ABA PayWay</h2>
+            <div class="khqr-modal-qr" id="aba-modal-qr">
+                <img src="" alt="ABA KHQR code for {{ number_format($total, 2) }} USD" id="aba-modal-qr-img">
+            </div>
+            <div class="khqr-modal-meta">
+                <span>Merchant: <strong>the DS</strong></span>
+                <span>Amount: <strong>$ {{ number_format($total, 2) }}</strong></span>
+            </div>
+            <p class="khqr-modal-hint">Open your ABA or Bakong app, choose <strong>Scan KHQR</strong>, and point your camera at the code above.</p>
+            <button type="button" class="khqr-modal-done" id="aba-modal-done">Done</button>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -237,8 +255,13 @@
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && overlay.classList.contains('is-open')) {
-                closeModal();
+            if (e.key === 'Escape') {
+                if (overlay.classList.contains('is-open')) {
+                    closeModal();
+                }
+                if (abaOverlay && abaOverlay.classList.contains('is-open')) {
+                    closeAbaModal();
+                }
             }
         });
 
@@ -301,6 +324,36 @@
 
         const abaPayBtn = document.getElementById('aba-pay-btn');
         const abaPayError = document.getElementById('aba-pay-error');
+        const abaOverlay = document.getElementById('aba-overlay');
+        const abaCloseBtn = document.getElementById('close-aba-modal');
+        const abaDoneBtn = document.getElementById('aba-modal-done');
+        const abaQrImg = document.getElementById('aba-modal-qr-img');
+
+        function openAbaModal() {
+            if (abaOverlay) {
+                abaOverlay.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+                if (abaCloseBtn) abaCloseBtn.focus();
+            }
+        }
+
+        function closeAbaModal() {
+            if (abaOverlay) {
+                abaOverlay.classList.remove('is-open');
+                document.body.style.overflow = '';
+                if (abaPayBtn) abaPayBtn.focus();
+            }
+        }
+
+        if (abaCloseBtn) abaCloseBtn.addEventListener('click', closeAbaModal);
+        if (abaDoneBtn) abaDoneBtn.addEventListener('click', closeAbaModal);
+
+        if (abaOverlay) {
+            abaOverlay.addEventListener('click', (e) => {
+                if (e.target === abaOverlay) closeAbaModal();
+            });
+        }
+
         if (abaPayBtn) {
             abaPayBtn.addEventListener('click', () => {
                 if (abaPayError) {
@@ -308,7 +361,7 @@
                     abaPayError.textContent = '';
                 }
                 abaPayBtn.disabled = true;
-                abaPayBtn.textContent = 'Redirecting...';
+                abaPayBtn.textContent = 'Generating KHQR...';
 
                 fetch('{{ route('payment.aba') }}', {
                     method: 'POST',
@@ -320,23 +373,26 @@
                 }).then(function(res) {
                     return res.json();
                 }).then(function(data) {
-                    if (data.success && data.redirect) {
-                        window.location.href = data.redirect;
+                    if (data.success && data.khqr) {
+                        if (abaQrImg) {
+                            abaQrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(data.khqr);
+                        }
+                        openAbaModal();
                     } else {
                         if (abaPayError) {
-                            abaPayError.textContent = data.message || 'Payment initiation failed. Please try again.';
+                            abaPayError.textContent = data.message || 'KHQR generation failed. Please try again.';
                             abaPayError.style.display = 'block';
                         }
-                        abaPayBtn.disabled = false;
-                        abaPayBtn.textContent = 'Pay with ABA';
                     }
+                    abaPayBtn.disabled = false;
+                    abaPayBtn.textContent = 'Show ABA KHQR';
                 }).catch(function(err) {
                     if (abaPayError) {
                         abaPayError.textContent = 'An error occurred. Please try again.';
                         abaPayError.style.display = 'block';
                     }
                     abaPayBtn.disabled = false;
-                    abaPayBtn.textContent = 'Pay with ABA';
+                    abaPayBtn.textContent = 'Show ABA KHQR';
                 });
             });
         }

@@ -51,11 +51,11 @@ class AbaPaywayService
             return [
                 'name'     => $item['name'],
                 'quantity' => (int) $item['quantity'],
-                'price'    => number_format((float) $item['price'], 2, '.', ''),
+                'price'    => (float) $item['price'],
             ];
         }, $cart));
 
-        $items = base64_encode(json_encode($itemsArray));
+        $items = base64_encode(json_encode($itemsArray, JSON_NUMERIC_CHECK));
         $returnUrlEncoded = base64_encode($returnUrl);
 
         // Hash order matching kechankrisna/php_payway (proven working implementation)
@@ -144,6 +144,139 @@ class AbaPaywayService
             ];
         } catch (\Exception $e) {
             Log::error('ABA PayWay purchase exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Payment gateway error. Please try again.'];
+        }
+    }
+
+    /**
+     * Generate a KHQR code via ABA PayWay for Bakong scanning.
+     *
+     * Uses the proven purchase endpoint with payment_option=abapay_khqr.
+     *
+     * @param string $transactionId
+     * @param float  $amount
+     * @param array  $shipping
+     * @param array  $cart
+     * @param string $returnUrl
+     * @param string $cancelUrl
+     * @return array{success: bool, khqr_string?: string, message?: string}
+     */
+    public function generateKhqr(
+        string $transactionId,
+        float $amount,
+        array $shipping,
+        array $cart,
+        string $returnUrl,
+        string $cancelUrl
+    ): array {
+        if ($this->merchantId === '' || $this->apiKey === '') {
+            return ['success' => false, 'message' => 'ABA PayWay is not configured.'];
+        }
+
+        $reqTime = now()->format('YmdHis');
+        $formattedAmount = number_format($amount, 2, '.', '');
+
+        $firstName = $this->splitName($shipping['full_name'] ?? '')[0];
+        $lastName  = $this->splitName($shipping['full_name'] ?? '')[1];
+
+        $itemsArray = array_values(array_map(function ($item) {
+            return [
+                'name'     => $item['name'],
+                'quantity' => (int) $item['quantity'],
+                'price'    => (float) $item['price'],
+            ];
+        }, $cart));
+
+        $items = base64_encode(json_encode($itemsArray, JSON_NUMERIC_CHECK));
+        $returnUrlEncoded = base64_encode($returnUrl);
+
+        // Same proven hash order as createPurchase(), just with abapay_khqr
+        $hashString = ''
+            . $reqTime
+            . $this->merchantId
+            . $transactionId
+            . $formattedAmount
+            . $items
+            . '0.00' // shipping
+            . ''     // ctid
+            . ''     // pwt
+            . $firstName
+            . $lastName
+            . ($shipping['email'] ?? '')
+            . ($shipping['phone'] ?? '')
+            . 'purchase'
+            . 'abapay_khqr'
+            . $returnUrlEncoded
+            . $cancelUrl
+            . ''     // continue_success_url
+            . ''     // return_deeplink
+            . 'USD'
+            . ''     // custom_fields
+            . ''     // return_params
+            . '';    // additional_params
+
+        $hash = base64_encode(hash_hmac('sha512', $hashString, $this->apiKey, true));
+
+        $payload = [
+            'req_time'             => $reqTime,
+            'merchant_id'          => $this->merchantId,
+            'tran_id'              => $transactionId,
+            'amount'               => $formattedAmount,
+            'items'                => $items,
+            'shipping'             => '0.00',
+            'firstname'            => $firstName,
+            'lastname'             => $lastName,
+            'email'                => $shipping['email'] ?? '',
+            'phone'                => $shipping['phone'] ?? '',
+            'type'                 => 'purchase',
+            'payment_option'       => 'abapay_khqr',
+            'return_url'           => $returnUrlEncoded,
+            'cancel_url'           => $cancelUrl,
+            'continue_success_url' => '',
+            'return_deeplink'      => '',
+            'currency'             => 'USD',
+            'custom_fields'        => '',
+            'return_params'        => '',
+            'hash'                 => $hash,
+        ];
+
+        Log::debug('ABA PayWay KHQR payload', [
+            'payload'    => $payload,
+            'hashString' => $hashString,
+        ]);
+
+        try {
+            $response = Http::withoutVerifying()->asForm()->post(
+                $this->baseUrl . '/api/payment-gateway/v1/payments/purchase',
+                $payload
+            );
+
+            $body = $response->json() ?? [];
+
+            Log::debug('ABA PayWay KHQR response', [
+                'status'       => $response->status(),
+                'body'         => $body,
+                'responseText' => $response->body(),
+            ]);
+
+            if ($response->successful() && !empty($body['qrString'])) {
+                return [
+                    'success'     => true,
+                    'khqr_string' => $body['qrString'],
+                ];
+            }
+
+            Log::warning('ABA PayWay KHQR failed', [
+                'status' => $response->status(),
+                'body'   => $body,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $body['status']['message'] ?? $body['message'] ?? 'Unable to generate ABA KHQR code.',
+            ];
+        } catch (\Exception $e) {
+            Log::error('ABA PayWay KHQR exception: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Payment gateway error. Please try again.'];
         }
     }

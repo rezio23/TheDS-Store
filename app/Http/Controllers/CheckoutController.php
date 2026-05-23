@@ -33,6 +33,25 @@ class CheckoutController extends Controller
         return $product->stock ?? null;
     }
 
+    private function decrementStock(array $cart): void
+    {
+        foreach ($cart as $item) {
+            $product = \App\Models\Product::with('sizes')->where('slug', $item['slug'])->first();
+            if (!$product) {
+                continue;
+            }
+
+            if ($product->sizes && $product->sizes->count()) {
+                $found = $product->sizes->firstWhere('size', $item['size']);
+                if ($found) {
+                    $found->decrement('quantity', $item['quantity']);
+                }
+            } else {
+                $product->decrement('stock', $item['quantity']);
+            }
+        }
+    }
+
     private function getTotals(array $cart, array $shipping = [], ?string $promoCode = null): array
     {
         $subtotal = array_sum(array_map(function ($item) {
@@ -262,6 +281,8 @@ class CheckoutController extends Controller
             ]);
         }
 
+        $this->decrementStock($cart);
+
         if ($totals['promotion']) {
             $totals['promotion']->increment('uses_count');
         }
@@ -333,6 +354,8 @@ class CheckoutController extends Controller
             ]);
         }
 
+        $this->decrementStock($cart);
+
         if ($totals['promotion']) {
             $totals['promotion']->increment('uses_count');
         }
@@ -375,7 +398,7 @@ class CheckoutController extends Controller
 
         $transactionId = substr('ABA' . time() . (Auth::id() ?? '0'), 0, 20);
 
-        $result = $this->abaPayway->createPurchase(
+        $result = $this->abaPayway->generateKhqr(
             $transactionId,
             (float) $totals['total'],
             $shipping,
@@ -385,7 +408,10 @@ class CheckoutController extends Controller
         );
 
         if (!$result['success']) {
-            return response()->json(['success' => false, 'message' => $result['message']], 500);
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'],
+            ], 500);
         }
 
         $order = Order::create([
@@ -416,37 +442,115 @@ class CheckoutController extends Controller
             ]);
         }
 
-        if ($totals['promotion']) {
-            $totals['promotion']->increment('uses_count');
-        }
+        session()->put('aba_pending_order_id', $order->id);
 
-        $order->load('items');
-        $this->telegram->sendOrderNotification($order);
-
-        session()->forget(['cart', 'shipping', 'promo_code']);
-
-        return response()->json(['success' => true, 'redirect' => $result['payment_url']]);
+        return response()->json([
+            'success'      => true,
+            'khqr'         => $result['khqr_string'],
+            'transaction_id' => $transactionId,
+            'amount'       => number_format($totals['total'], 2),
+        ]);
     }
 
     public function abaReturn(Request $request)
     {
-        $transactionId = $request->input('transaction_id');
+        $transactionId = $request->input('transaction_id') ?? $request->input('tran_id');
         $status = $request->input('status');
 
         $order = Order::where('gateway_transaction_id', $transactionId)->first();
 
         if (!$order) {
-            return redirect()->route('profile')->with('error', 'Order not found.');
+            return redirect()->route('cart')->with('error', 'Order session expired. Please try again.');
         }
 
-        $order->update([
-            'status' => $status === 'success' ? 'paid' : 'failed',
-        ]);
-
-        if ($status === 'success') {
+        if ($order->status === 'paid') {
+            session()->forget(['cart', 'shipping', 'promo_code', 'aba_pending_order_id']);
             return redirect()->route('profile', ['ordered' => 1])->with('success', 'Payment completed successfully.');
         }
 
-        return redirect()->route('profile')->with('error', 'Payment was cancelled or failed.');
+        if ($status === 'success') {
+            $order->update(['status' => 'paid']);
+
+            $cart = session('cart', []);
+            if (!empty($cart)) {
+                $this->decrementStock($cart);
+            }
+
+            if ($order->promotion_id) {
+                $promotion = Promotion::find($order->promotion_id);
+                if ($promotion) {
+                    $promotion->increment('uses_count');
+                }
+            }
+
+            $order->load('items');
+            $this->telegram->sendOrderNotification($order);
+
+            session()->forget(['cart', 'shipping', 'promo_code', 'aba_pending_order_id']);
+
+            return redirect()->route('profile', ['ordered' => 1])->with('success', 'Payment completed successfully.');
+        }
+
+        $order->update(['status' => 'failed']);
+        session()->forget('aba_pending_order_id');
+
+        return redirect()->route('payment')->with('error', 'Payment was cancelled or failed. You can try a different payment method.');
+    }
+
+    /**
+     * Handle ABA PayWay KHQR webhook callback.
+     */
+    public function abaCallback(Request $request)
+    {
+        $data = $request->all();
+
+        Log::info('ABA PayWay callback received', $data);
+
+        $transactionId = $data['transaction_id'] ?? $data['tran_id'] ?? null;
+        $statusCode = $data['payment_status_code'] ?? null;
+
+        if (!$transactionId) {
+            return response()->json(['status' => 'error', 'message' => 'Missing transaction_id'], 400);
+        }
+
+        $order = Order::where('gateway_transaction_id', $transactionId)->first();
+
+        if (!$order) {
+            Log::warning('ABA callback: order not found', ['transaction_id' => $transactionId]);
+            return response()->json(['status' => 'error', 'message' => 'Order not found'], 404);
+        }
+
+        if ($order->status === 'paid') {
+            return response()->json(['status' => 'success', 'message' => 'Already processed']);
+        }
+
+        if ($statusCode === 0 || $statusCode === '0' || ($data['payment_status'] ?? '') === 'APPROVED') {
+            $order->update(['status' => 'paid']);
+
+            $cart = session('cart', []);
+            if (!empty($cart)) {
+                $this->decrementStock($cart);
+            }
+
+            if ($order->promotion_id) {
+                $promotion = Promotion::find($order->promotion_id);
+                if ($promotion) {
+                    $promotion->increment('uses_count');
+                }
+            }
+
+            $order->load('items');
+            $this->telegram->sendOrderNotification($order);
+
+            session()->forget(['cart', 'shipping', 'promo_code', 'aba_pending_order_id']);
+
+            Log::info('ABA PayWay callback: order marked paid', ['order_id' => $order->id]);
+            return response()->json(['status' => 'success']);
+        }
+
+        $order->update(['status' => 'failed']);
+        Log::warning('ABA PayWay callback: payment failed', ['order_id' => $order->id, 'status' => $statusCode]);
+
+        return response()->json(['status' => 'failed']);
     }
 }
