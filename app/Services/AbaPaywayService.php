@@ -4,6 +4,9 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use KHQR\BakongKHQR;
+use KHQR\Helpers\KHQRData;
+use KHQR\Models\IndividualInfo;
 
 class AbaPaywayService
 {
@@ -152,6 +155,7 @@ class AbaPaywayService
      * Generate a KHQR code via ABA PayWay for Bakong scanning.
      *
      * Uses the proven purchase endpoint with payment_option=abapay_khqr.
+     * Falls back to local KHQR generation when API credentials are not configured.
      *
      * @param string $transactionId
      * @param float  $amount
@@ -170,7 +174,8 @@ class AbaPaywayService
         string $cancelUrl
     ): array {
         if ($this->merchantId === '' || $this->apiKey === '') {
-            return ['success' => false, 'message' => 'ABA PayWay is not configured.'];
+            Log::info('ABA PayWay not configured; falling back to local KHQR generation');
+            return $this->generateLocalKhqr($amount);
         }
 
         $reqTime = now()->format('YmdHis');
@@ -278,6 +283,40 @@ class AbaPaywayService
         } catch (\Exception $e) {
             Log::error('ABA PayWay KHQR exception: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Payment gateway error. Please try again.'];
+        }
+    }
+
+    /**
+     * Generate a KHQR string locally using the Bakong library.
+     * Produces a scannable QR for development without real ABA credentials.
+     */
+    public function generateLocalKhqr(float $amount, string $currency = 'USD'): array
+    {
+        try {
+            $individualInfo = IndividualInfo::withOptionalArray(
+                'test_merchant@nbcq',
+                config('services.bakong.merchant_name', 'the DS'),
+                config('services.bakong.merchant_city', 'PHNOM PENH'),
+                [
+                    'currency' => $currency === 'KHR' ? KHQRData::CURRENCY_KHR : KHQRData::CURRENCY_USD,
+                    'amount'   => $amount,
+                ]
+            );
+
+            $response = BakongKHQR::generateIndividual($individualInfo);
+            $qr = $response->data['qr'] ?? null;
+
+            if ($qr) {
+                return [
+                    'success'     => true,
+                    'khqr_string' => $qr,
+                ];
+            }
+
+            return ['success' => false, 'message' => 'Local KHQR generation failed.'];
+        } catch (\Exception $e) {
+            Log::error('ABA local KHQR exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'KHQR generation error.'];
         }
     }
 

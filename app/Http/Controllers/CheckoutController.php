@@ -6,13 +6,11 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Promotion;
 use App\Services\AbaPaywayService;
+use App\Services\BakongService;
 use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use KHQR\BakongKHQR;
-use KHQR\Helpers\KHQRData;
-use KHQR\Models\IndividualInfo;
 
 class CheckoutController extends Controller
 {
@@ -134,30 +132,27 @@ class CheckoutController extends Controller
         $promoCode = session('promo_code');
         $totals = $this->getTotals($cart, $shipping, $promoCode);
 
+        $bakongService = app(BakongService::class);
         $khqrString = null;
-        $bakongAccountId = config('services.bakong.account_id');
+        $bakongTransactionId = null;
 
-        if ($bakongAccountId && $bakongAccountId !== 'your_bakong_id@nbcq') {
-            try {
-                $individualInfo = IndividualInfo::withOptionalArray(
-                    $bakongAccountId,
-                    config('services.bakong.merchant_name', 'the DS'),
-                    config('services.bakong.merchant_city', 'PHNOM PENH'),
-                    [
-                        'currency' => KHQRData::CURRENCY_USD,
-                        'amount' => (float) $totals['total'],
-                    ]
-                );
-
-                $response = BakongKHQR::generateIndividual($individualInfo);
-                $khqrString = $response->data['qr'] ?? null;
-            } catch (\Exception $e) {
-                Log::warning('Bakong KHQR generation failed: ' . $e->getMessage());
-            }
+        $result = $bakongService->generateKhqr((float) $totals['total']);
+        if ($result['success']) {
+            $khqrString = $result['khqr_string'];
+            $bakongTransactionId = $result['transaction_id'] ?? null;
+        } else {
+            Log::warning('Bakong KHQR generation failed: ' . $result['message']);
         }
 
         if (! $khqrString) {
-            $khqrString = 'KHQR|theDS|' . number_format($totals['total'], 2) . '|USD';
+            $localResult = $bakongService->generateLocalKhqr((float) $totals['total']);
+            if ($localResult['success']) {
+                $khqrString = $localResult['khqr_string'];
+            }
+        }
+
+        if ($bakongTransactionId) {
+            session(['bakong_transaction_id' => $bakongTransactionId]);
         }
 
         $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($khqrString);
@@ -261,6 +256,7 @@ class CheckoutController extends Controller
             'discount' => $totals['discount'],
             'status' => 'pending',
             'payment_method' => $paymentMethod,
+            'gateway_transaction_id' => $paymentMethod === 'khqr' ? session('bakong_transaction_id') : null,
             'shipping_name' => $shipping['full_name'],
             'shipping_phone' => $shipping['phone'],
             'shipping_address' => $address,
@@ -290,7 +286,7 @@ class CheckoutController extends Controller
         $order->load('items');
         $this->telegram->sendOrderNotification($order);
 
-        session()->forget(['cart', 'shipping', 'promo_code']);
+        session()->forget(['cart', 'shipping', 'promo_code', 'bakong_transaction_id']);
 
         return redirect()->route('profile', ['ordered' => 1]);
     }
@@ -452,6 +448,44 @@ class CheckoutController extends Controller
         ]);
     }
 
+    public function processBakongKhqr(Request $request)
+    {
+        $cart = session('cart', []);
+        $shipping = session('shipping', []);
+
+        if (empty($cart) || empty($shipping)) {
+            return response()->json(['success' => false, 'message' => 'Invalid checkout state.'], 400);
+        }
+
+        $promoCode = session('promo_code');
+        $totals = $this->getTotals($cart, $shipping, $promoCode);
+
+        $bakongService = app(BakongService::class);
+
+        $result = $bakongService->generateKhqr((float) $totals['total']);
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'KHQR generation failed.',
+            ], 500);
+        }
+
+        if (!empty($result['transaction_id'])) {
+            session(['bakong_transaction_id' => $result['transaction_id']]);
+        }
+
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($result['khqr_string']);
+
+        return response()->json([
+            'success'        => true,
+            'khqr'           => $result['khqr_string'],
+            'qr_url'         => $qrUrl,
+            'transaction_id' => $result['transaction_id'] ?? null,
+            'amount'         => number_format($totals['total'], 2),
+        ]);
+    }
+
     public function abaReturn(Request $request)
     {
         $transactionId = $request->input('transaction_id') ?? $request->input('tran_id');
@@ -550,6 +584,57 @@ class CheckoutController extends Controller
 
         $order->update(['status' => 'failed']);
         Log::warning('ABA PayWay callback: payment failed', ['order_id' => $order->id, 'status' => $statusCode]);
+
+        return response()->json(['status' => 'failed']);
+    }
+
+    /**
+     * Handle Bakong webhook callback.
+     */
+    public function bakongCallback(Request $request)
+    {
+        $data = $request->all();
+
+        Log::info('Bakong callback received', $data);
+
+        $transactionId = $data['transaction_id'] ?? $data['txn_id'] ?? $data['id'] ?? null;
+        $status = $data['status'] ?? $data['payment_status'] ?? null;
+        $statusCode = $data['payment_status_code'] ?? null;
+
+        if (!$transactionId) {
+            return response()->json(['status' => 'error', 'message' => 'Missing transaction_id'], 400);
+        }
+
+        $order = Order::where('gateway_transaction_id', $transactionId)->first();
+
+        if (!$order) {
+            Log::warning('Bakong callback: order not found', ['transaction_id' => $transactionId]);
+            return response()->json(['status' => 'error', 'message' => 'Order not found'], 404);
+        }
+
+        if ($order->status === 'paid') {
+            return response()->json(['status' => 'success', 'message' => 'Already processed']);
+        }
+
+        if ($status === 'success' || $status === 'completed' || $status === 'APPROVED' || $statusCode === 0 || $statusCode === '0') {
+            $order->update(['status' => 'paid']);
+
+            if ($order->promotion_id) {
+                $promotion = Promotion::find($order->promotion_id);
+                if ($promotion) {
+                    $promotion->increment('uses_count');
+                }
+            }
+
+            $order->load('items');
+            $this->telegram->sendOrderNotification($order);
+
+            Log::info('Bakong callback: order marked paid', ['order_id' => $order->id]);
+            return response()->json(['status' => 'success']);
+        }
+
+        $order->update(['status' => 'failed']);
+        Log::warning('Bakong callback: payment failed', ['order_id' => $order->id, 'status' => $status]);
 
         return response()->json(['status' => 'failed']);
     }

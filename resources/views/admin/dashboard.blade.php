@@ -143,7 +143,6 @@
                                     <th>Payment</th>
                                     <th>Status</th>
                                     <th>Date</th>
-                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -156,9 +155,6 @@
                                         <td>{{ ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}</td>
                                         <td><span class="admin-badge-status status-{{ $order->status }}">{{ ucfirst($order->status) }}</span></td>
                                         <td>{{ $order->created_at->format('M d, Y') }}</td>
-                                        <td>
-                                                <button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="{{ $order->id }}" data-order-customer="{{ $order->user->full_name ?? 'Guest' }}" data-order-status="{{ $order->status }}" data-order-total="{{ $order->total }}" data-order-payment="{{ ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}" data-order-shipping="{{ $order->shipping_mode ?? 'Standard' }}" data-order-date="{{ $order->created_at->format('M d, Y H:i') }}" data-order-items="{{ htmlspecialchars(json_encode($order->items->map(fn($i) => ['product_name' => $i->product_name, 'product_brand' => $i->product_brand, 'size' => $i->size, 'quantity' => $i->quantity, 'product_price' => $i->product_price, 'product_image' => $i->product_image])), ENT_QUOTES, 'UTF-8') }}">View</button>
-                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -228,7 +224,7 @@
                                 <td>{{ $order->shipping_mode ?? 'Standard' }}</td>
                                 <td>{{ $order->created_at->format('M d, Y H:i') }}</td>
                                 <td>
-                                    <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-start;">
+                                    <div style="display:flex;flex-direction:row;gap:0.4rem;align-items:center;flex-wrap:nowrap;">
                                         <form method="post" action="{{ route('admin.dashboard') }}?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">
                                             @csrf
                                             <input type="hidden" name="order_id" value="{{ $order->id }}">
@@ -1918,7 +1914,6 @@
 
     function buildRecentOrderRow(order) {
         var itemCount = (order.items || []).length;
-        var itemsJson = JSON.stringify(order.items || []);
         return '<tr>' +
             '<td>#' + order.id + '</td>' +
             '<td>' + escapeHtml(order.customer) + '</td>' +
@@ -1927,11 +1922,6 @@
             '<td>' + escapeHtml(order.payment || 'N/A') + '</td>' +
             '<td><span class="admin-badge-status status-' + order.status + '">' + order.status.charAt(0).toUpperCase() + order.status.slice(1) + '</span></td>' +
             '<td>' + escapeHtml(order.date) + '</td>' +
-            '<td>' +
-                '<button type="button" class="admin-btn admin-btn--small" data-order-view data-order-id="' + order.id + '" data-order-customer="' + escapeHtml(order.customer) + '" data-order-status="' + order.status + '" data-order-total="' + order.total + '" data-order-payment="' + escapeHtml(order.payment || 'N/A') + '" data-order-shipping="' + escapeHtml(order.shipping || 'Standard') + '" data-order-date="' + escapeHtml(order.date) + '" data-order-items="' + escapeHtml(itemsJson) + '"' + '>' +
-                    'View' +
-                '</button>' +
-            '</td>' +
         '</tr>';
     }
 
@@ -1961,7 +1951,7 @@
             '<td>' + shipping + '</td>' +
             '<td>' + escapeHtml(order.datetime) + '</td>' +
             '<td>' +
-                '<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-start;">' +
+                '<div style="display:flex;flex-direction:row;gap:0.4rem;align-items:center;flex-wrap:nowrap;">' +
                     '<form method="post" action="' + adminUrl + '?tab=orders" style="display:flex;gap:0.5rem;align-items:center;">' +
 
                     '<input type="hidden" name="_token" value="' + csrfToken + '">' +
@@ -2131,7 +2121,7 @@
                 </div>
             </div>
 
-            <h3 style="margin:20px 0 12px;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Ordered Items</h3>
+            <h3 style="margin:20px 0 12px;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:400;">Ordered Items</h3>
             <div id="odm-items"></div>
         </div>
 

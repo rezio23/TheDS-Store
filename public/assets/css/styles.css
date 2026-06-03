@@ -8309,25 +8309,27 @@ body.shop-page {
 .admin-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.58rem;
+    font-size: 0.52rem;
 }
 
 .admin-table th,
 .admin-table td {
     text-align: left;
-    padding: 12px 10px;
+    padding: 10px 8px;
     border-bottom: 1px solid rgba(192, 107, 0, 0.15);
+    white-space: nowrap;
 }
 
 .admin-table td {
-    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .admin-table th {
     color: var(--muted);
     font-weight: 400;
     text-transform: uppercase;
-    font-size: 0.58rem;
+    font-size: 0.52rem;
     letter-spacing: 0.06em;
 }
 
@@ -8421,6 +8423,7 @@ body.shop-page {
     font-size: 0.58rem;
     cursor: pointer;
     transition: opacity 0.2s;
+    white-space: nowrap;
 }
 
 .admin-btn:hover {

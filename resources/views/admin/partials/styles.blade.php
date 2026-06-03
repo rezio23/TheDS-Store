@@ -282,7 +282,7 @@ button {
 .promo-overview__item strong {
     display: block;
     font-size: 0.78rem;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--ink);
     line-height: 1.2;
 }
@@ -306,25 +306,27 @@ button {
 .admin-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.58rem;
+    font-size: 0.56rem;
 }
 
 .admin-table th,
 .admin-table td {
     text-align: left;
-    padding: 12px 10px;
+    padding: 11px 9px;
     border-bottom: 1px solid rgba(192, 107, 0, 0.15);
+    white-space: nowrap;
 }
 
 .admin-table td {
-    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .admin-table th {
     color: var(--muted);
     font-weight: 400;
     text-transform: uppercase;
-    font-size: 0.58rem;
+    font-size: 0.56rem;
     letter-spacing: 0.06em;
 }
 
@@ -339,7 +341,7 @@ button {
     font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    font-weight: 600;
+    font-weight: 400;
     text-align: center;
     width: 98px;
     white-space: nowrap;
@@ -407,7 +409,7 @@ button {
     color: var(--accent);
     font-family: var(--font-primary);
     font-size: 0.58rem;
-    font-weight: 800;
+    font-weight: 400;
     transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
     cursor: pointer;
 }
@@ -425,7 +427,7 @@ button {
 
 .admin-select-control__label {
     color: rgba(0, 0, 0, 0.58);
-    font-size: 0.52rem;
+    font-size: 0.55rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
@@ -437,7 +439,7 @@ button {
     color: var(--accent);
     font: inherit;
     font-size: 0.58rem;
-    font-weight: 800;
+    font-weight: 400;
     outline: 0;
     cursor: pointer;
     display: inline-flex;
@@ -445,6 +447,7 @@ button {
     justify-content: space-between;
     gap: 8px;
     padding: 0;
+    white-space: nowrap;
 }
 
 .admin-select-toggle svg {
@@ -515,7 +518,7 @@ button {
     color: var(--accent);
     font: inherit;
     font-size: 0.55rem;
-    font-weight: 800;
+    font-weight: 400;
     text-align: left;
     cursor: pointer;
     transition: background 160ms ease, color 160ms ease, transform 160ms ease;
@@ -559,6 +562,7 @@ button {
     font-size: 0.58rem;
     cursor: pointer;
     transition: opacity 0.2s;
+    white-space: nowrap;
 }
 
 .admin-btn:hover {
@@ -834,7 +838,7 @@ button {
     background: rgba(192, 107, 0, 0.12);
     color: var(--accent);
     font-size: 0.55rem;
-    font-weight: 600;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 16px;
@@ -854,15 +858,16 @@ button {
 }
 
 .admin-product-modal__meta > div span {
-    font-size: 0.52rem;
+    font-size: 0.55rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--muted);
+    font-weight: 400;
 }
 
 .admin-product-modal__meta > div strong {
     font-size: 0.68rem;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--ink);
 }
 
@@ -898,8 +903,15 @@ button {
 }
 
 .admin-product-modal__foot span {
-    font-size: 0.52rem;
+    font-size: 0.55rem;
     color: var(--muted);
+}
+
+.admin-product-modal strong,
+.admin-product-modal b,
+.admin-request-modal strong,
+.admin-request-modal b {
+    font-weight: 400;
 }
 
 @media (max-width: 600px) {
@@ -930,7 +942,7 @@ button {
     color: var(--accent);
     font-family: var(--font-primary);
     font-size: 0.58rem;
-    font-weight: 800;
+    font-weight: 400;
     transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -1048,7 +1060,7 @@ button {
 
 .help-request-form__label {
     font-size: 0.78rem;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1146,6 +1158,7 @@ button {
     color: var(--muted);
     margin-bottom: 6px;
     display: block;
+    font-weight: 400;
 }
 
 .admin-request-modal__body {
@@ -1171,12 +1184,13 @@ button {
 }
 
 .admin-request-field__label {
-    font-size: 0.52rem;
+    font-size: 0.55rem;
     text-transform: uppercase;
     letter-spacing: 0.07em;
     color: var(--muted);
     display: block;
     margin-bottom: 8px;
+    font-weight: 400;
 }
 
 .admin-request-field__value {
@@ -1196,7 +1210,7 @@ button {
     border: none;
     padding: 0;
     font-size: 0.65rem;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .admin-request-meta-grid {
@@ -1207,17 +1221,18 @@ button {
 }
 
 .admin-request-meta-grid .meta-item span {
-    font-size: 0.52rem;
+    font-size: 0.55rem;
     text-transform: uppercase;
     letter-spacing: 0.07em;
     color: var(--muted);
     display: block;
     margin-bottom: 4px;
+    font-weight: 400;
 }
 
 .admin-request-meta-grid .meta-item strong {
     font-size: 0.65rem;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--ink);
     word-break: break-word;
 }
@@ -1307,7 +1322,7 @@ button {
 }
 .odm-item__info strong {
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--ink);
 }
 .odm-item__info span {

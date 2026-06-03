@@ -34,9 +34,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/payment/paypal', [CheckoutController::class, 'processPayPal'])->name('payment.paypal');
     Route::post('/payment/aba', [CheckoutController::class, 'processAbaPayway'])->name('payment.aba');
     Route::get('/payment/aba/return', [CheckoutController::class, 'abaReturn'])->name('payment.aba.return');
+    Route::post('/payment/khqr', [CheckoutController::class, 'processBakongKhqr'])->name('payment.khqr');
 });
 
 Route::post('/payment/aba/callback', [CheckoutController::class, 'abaCallback'])->name('payment.aba.callback');
+Route::post('/payment/bakong/callback', [CheckoutController::class, 'bakongCallback'])->name('payment.bakong.callback');
 
 Route::middleware('auth')->group(function () {
     Route::post('/apply-promo', [CheckoutController::class, 'applyPromo'])->name('apply-promo');

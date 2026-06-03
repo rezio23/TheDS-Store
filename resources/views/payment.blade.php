@@ -47,6 +47,7 @@
                             <div class="payment-method-body payment-khqr">
                                 <p class="payment-method-text">Pay securely with your Bakong app or any supported banking app using KHQR.</p>
                                 <button type="button" class="payment-action-btn" id="open-khqr-modal" aria-haspopup="dialog">Show KHQR Code</button>
+                                <p id="khqr-pay-error" class="payment-method-error" style="display:none;"></p>
                             </div>
                         </div>
 
@@ -192,13 +193,14 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             <h2 id="khqr-modal-title" class="khqr-modal-title">Scan to Pay with Bakong</h2>
-            <div class="khqr-modal-qr">
-                <img src="{{ $qrUrl }}" alt="Bakong KHQR code for {{ number_format($total, 2) }} USD">
+            <div class="khqr-modal-qr" id="khqr-modal-qr">
+                <img src="" alt="Bakong KHQR code for {{ number_format($total, 2) }} USD" id="khqr-modal-qr-img">
             </div>
             <div class="khqr-modal-meta">
                 <span>Merchant: <strong>the DS</strong></span>
                 <span>Amount: <strong>$ {{ number_format($total, 2) }}</strong></span>
             </div>
+            <p class="khqr-modal-hint" id="khqr-countdown"></p>
             <p class="khqr-modal-hint">Open your Bakong app or bank app, choose <strong>Scan KHQR</strong>, and point your camera at the code above.</p>
             <button type="button" class="khqr-modal-done" id="khqr-modal-done">Done</button>
         </div>
@@ -233,26 +235,35 @@
         const closeBtn = document.getElementById('close-khqr-modal');
         const doneBtn = document.getElementById('khqr-modal-done');
         const overlay = document.getElementById('khqr-overlay');
+        const khqrQrImg = document.getElementById('khqr-modal-qr-img');
+        const khqrCountdown = document.getElementById('khqr-countdown');
+        const khqrPayError = document.getElementById('khqr-pay-error');
+        let khqrTimer = null;
 
         function openModal() {
             overlay.classList.add('is-open');
             document.body.style.overflow = 'hidden';
-            closeBtn.focus();
+            if (closeBtn) closeBtn.focus();
         }
 
         function closeModal() {
             overlay.classList.remove('is-open');
             document.body.style.overflow = '';
+            if (khqrTimer) {
+                clearInterval(khqrTimer);
+                khqrTimer = null;
+            }
             if (openBtn) openBtn.focus();
         }
 
-        if (openBtn) openBtn.addEventListener('click', openModal);
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
         if (doneBtn) doneBtn.addEventListener('click', closeModal);
 
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal();
-        });
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeModal();
+            });
+        }
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -264,6 +275,70 @@
                 }
             }
         });
+
+        if (openBtn) {
+            openBtn.addEventListener('click', () => {
+                if (khqrPayError) {
+                    khqrPayError.style.display = 'none';
+                    khqrPayError.textContent = '';
+                }
+                if (khqrCountdown) khqrCountdown.textContent = '';
+                openBtn.disabled = true;
+                openBtn.textContent = 'Generating KHQR...';
+
+                fetch('{{ route('payment.khqr') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({})
+                }).then(function(res) {
+                    return res.json();
+                }).then(function(data) {
+                    if (data.success && data.khqr) {
+                        if (khqrQrImg) {
+                            khqrQrImg.src = data.qr_url;
+                        }
+                        openModal();
+
+                        // 5-minute countdown
+                        let secondsLeft = 300;
+                        if (khqrCountdown) {
+                            khqrCountdown.textContent = 'Expires in 5:00';
+                            khqrTimer = setInterval(function() {
+                                secondsLeft--;
+                                if (secondsLeft <= 0) {
+                                    clearInterval(khqrTimer);
+                                    khqrTimer = null;
+                                    khqrCountdown.textContent = 'Expired. Please close and reopen to refresh.';
+                                    if (khqrQrImg) khqrQrImg.style.opacity = '0.4';
+                                    return;
+                                }
+                                const m = Math.floor(secondsLeft / 60);
+                                const s = secondsLeft % 60;
+                                khqrCountdown.textContent = 'Expires in ' + m + ':' + (s < 10 ? '0' : '') + s;
+                            }, 1000);
+                            if (khqrQrImg) khqrQrImg.style.opacity = '1';
+                        }
+                    } else {
+                        if (khqrPayError) {
+                            khqrPayError.textContent = data.message || 'KHQR generation failed. Please try again.';
+                            khqrPayError.style.display = 'block';
+                        }
+                    }
+                    openBtn.disabled = false;
+                    openBtn.textContent = 'Show KHQR Code';
+                }).catch(function(err) {
+                    if (khqrPayError) {
+                        khqrPayError.textContent = 'An error occurred. Please try again.';
+                        khqrPayError.style.display = 'block';
+                    }
+                    openBtn.disabled = false;
+                    openBtn.textContent = 'Show KHQR Code';
+                });
+            });
+        }
 
         const tabs = document.querySelectorAll('.payment-step-tab');
         const panels = document.querySelectorAll('.payment-tab-panel');
